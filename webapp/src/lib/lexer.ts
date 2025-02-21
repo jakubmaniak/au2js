@@ -1,29 +1,5 @@
-export enum TokenType {
-    EOF = 'EOF',
-    EOL = 'EOL',
-    Directive = 'Directive',
-    Keyword = 'Keyword',
-    Identifier = 'Identifier',
-    Variable = 'Variable',
-    Macro = 'Macro',
-    Number = 'Number',
-    String = 'String',
-    Bracket = 'Bracket',
-    // LParen = 'LParen',
-    // RParen = 'RParen',
-    // LSquare = 'LSquare',
-    // RSquare = 'RSquare',
-    Comma = 'Comma',
-    Dot = 'Dot',
-    Operator = 'Operator',
-}
-
-
-// TODO: add position and (toString / TokenFormatter)
-export interface Token<V = any> {
-    type: TokenType;
-    value?: V;
-}
+import { Token } from './types/token';
+import { TokenType } from './types/token-type';
 
 
 const keywords = [
