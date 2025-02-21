@@ -1,0 +1,98 @@
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
+body {
+    display: block;
+    background-color: #101014;
+    color-scheme: dark;
+}
+
+#app {
+    display: grid;
+    grid-template:
+        'in outa' 1fr
+        'in outb' 1fr / 1fr 1fr;
+    height: 100vh;
+}
+
+textarea, #output, #output-bottom {
+    padding: 12px;
+    background-color: transparent;
+    color: #d0dade;
+    font-family: 'JetBrains Mono';
+    font-size: 14px;
+    font-weight: 500;
+}
+
+textarea {
+    grid-area: in;
+    flex: 2;
+    border: 0;
+    outline: none;
+    resize: none;
+}
+
+#output,
+#output-bottom {
+    grid-area: outa;
+    flex: 3;
+    border-left: 1px solid #202024;
+    white-space: pre-wrap;
+    color: #bed0e2;
+    overflow: auto;
+}
+
+#output-bottom {
+    grid-area: outb;
+    border-top: 1px solid #202024;
+}
+
+#output.error {
+    color: #d04040;
+}
+
+.token--string {
+    color: #addbbc;
+}
+
+.token--title {
+    color: #e6eaef;
+}
+
+.token--keyword {
+    color: #228a96;
+}
+
+.token--number {
+    color: #61bcc6;
+}
+
+.token--comment {
+    color: #44515e;
+}
+
+.token--attr {
+    color: #aeb9c4;
+}
+
+.token--property {
+    color: #bed0e2;
+}
+
+.token--variable {
+    color: #30c1ae;
+    font-weight: 500;
+}
+
+
+/*yaml*/
+.token--literal {
+    color: #228a96;
+}
+
+.token--bullet {
+    color: #808080;
+}
