@@ -1,7 +1,13 @@
-# au2js - AutoIt3 to JavaScript Converter
+<p align="center">
+    <img src="webapp/public/favicon.png">
+</p>
+<h1 align="center">Au2Js – AutoIt3 to JavaScript Converter</h1>
 
-This project is a converter that translates AutoIt3 code into JavaScript. It is built using TypeScript and Vite.
+<p align="center">
+This project is a converter that translates AutoIt3 code into JavaScript.
+It is built using TypeScript and Vite.<br>
 The primary objective is to achieve the highest possible compatibility with AutoIt3, ensuring accurate and reliable code conversion.
+</p>
 
 ## Features
 - Converts AutoIt3 scripts to JavaScript in real-time
