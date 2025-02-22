@@ -7,12 +7,18 @@ type AuConvertableNumber<T extends number> = T | `${T}`
 
 
 const macros = {
+    _var: {
+        error: 0,
+        extended: 0,
+        exitCode: 0,
+    },
     AUTOITVERSION: '3.3.16.1',
     COMPILED: 0,
     CR: '\r',
     CRLF: '\r\n',
-    ERROR: 0,
-    EXTENDED: 0,
+    get ERROR() { return this._var.error; },
+    get EXTENDED() { return this._var.extended; },
+    get EXITCODE() { return this._var.exitCode; },
     get HOUR() { return new Date().getHours(); },
     LF: '\n',
     get MDAY() { return new Date().getDate(); },
@@ -87,6 +93,9 @@ const functions = {
     },
     ConsoleWrite(data: any) { console.log(data); },
     Cos(number: AuNumber) { return Math.cos(+number); },
+    // Exit(number: AuNumber = 0) {
+    //     macros._var.exitCode = +number;
+    // },
     Exp(number: AuNumber) { return Math.exp(+number); },
     Floor(number: AuNumber) { return Math.floor(+number); },
     FuncName(func: Function) { return func.name; },
@@ -111,6 +120,15 @@ const functions = {
         if (+decim < 0)
             return Math.round((number as number) * 10 ** +decim) / 10 ** +decim;
         return +(+number).toFixed(+decim);
+    },
+    SetError(code: AuNumber, extended: AuNumber = 0, returnValue: any = 1) {
+        macros._var.error = +code;
+        macros._var.extended = +extended;
+        return returnValue;
+    },
+    SetExtended(extended: AuNumber, returnValue: any = 1) {
+        macros._var.extended = +extended;
+        return returnValue;
     },
     Sin(number: AuNumber) {
         return Math.sin(+number);

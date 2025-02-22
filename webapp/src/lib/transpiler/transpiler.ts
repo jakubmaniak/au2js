@@ -5,7 +5,7 @@ import { Scope } from './scope';
 
 
 const macros = new Set([
-    'AUTOITVERSION', 'COMPILED', 'CR', 'CRLF', 'ERROR', 'EXTENDED', 'HOUR', 'LF',
+    'AUTOITVERSION', 'COMPILED', 'CR', 'CRLF', 'ERROR', 'EXITCODE', 'EXTENDED', 'HOUR', 'LF',
     'MDAY', 'MIN', 'MON', 'MSEC', 'OSLANG', 'SEC', 'SW_SHOW', 'TAB', 'WDAY', 'YDAY', 'YEAR'
 ]);
 
@@ -158,6 +158,8 @@ export class Transpiler {
     private exit(node: TypedNode<NodeType.Exit>) {
         if (!node.code) return 'process.exit();';
         return 'process.exit(' + this.expression(node.code) + ');';
+        // if (!node.code) return 'au3.Exit();';
+        // return 'au3.Exit(' + this.expression(node.code) + ');';
     }
 
     private varDeclaration(node: TypedNode<NodeType.VarDeclaration>) {
@@ -353,7 +355,7 @@ export class Transpiler {
 
         return code;
     }
-    
+
     private doUntilStatement(node: TypedNode<NodeType.DoUntilStatement>) {
         let code = 'do {\n';
 

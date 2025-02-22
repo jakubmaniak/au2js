@@ -7,10 +7,15 @@ ConsoleHandler.setCallback((data) => postMessage({ $console: data }));
 
 addEventListener('message', (ev) => {
     const require = (_path: string) => lib;
+    const process = {
+        exit (code: number) {
+            postMessage({ $done: performance.now() - t0, exitCode: code });
+        }
+    };
 
     const t0 = performance.now();
-    new Function('require', ev.data.code).call(null, require);
+    new Function('require', 'process', ev.data.code).call(null, require, process);
     const t = performance.now() - t0;
 
-    postMessage({ $done: t });
+    postMessage({ $done: t, exitCode: lib?._var.exitCode });
 });
