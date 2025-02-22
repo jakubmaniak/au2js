@@ -1,9 +1,3 @@
-import au3 from './au3';
-import { ConsoleHandler } from './console-handler';
-
-
-const lib = ConsoleHandler.injectTo(au3);
-
 export class Evaluator {
     private constructor(
         private code: string,
@@ -15,12 +9,21 @@ export class Evaluator {
     }
 
     private run() {
-        if (this.onConsoleWrite) {
-            ConsoleHandler.setCallback(this.onConsoleWrite);
-            this.onConsoleWrite = undefined;
-        }
+        const worker = new Worker(
+            new URL('evaluator-worker.ts', import.meta.url),
+            { type: 'module' }
+        );
 
-        const require = (_path: string) => lib;
-        new Function('require', this.code).call(null, require);
+        worker.addEventListener('message', (ev) => {
+            if ('$console' in ev.data) {
+                this.onConsoleWrite?.(ev.data.$console);
+            }
+            else if ('$done' in ev.data) {
+                console.log('Executed in ' + ev.data.$done.toFixed(2) + 'ms');
+                worker.terminate();
+            }
+        });
+
+        worker.postMessage({ code: this.code });
     }
 }

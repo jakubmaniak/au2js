@@ -79,15 +79,38 @@ textarea {
 #extra-output .header {
     display: flex;
     flex-shrink: 0;
+    background-color: rgba(255,255,255,0.01);
+    border-bottom: 1px solid rgba(255,255,255,0.025);
+    border-radius: 6px 6px 0 0;
+}
+
+button#execute {
+    flex-shrink: 0;
+    margin: auto;
+    margin-right: 9px;
+    width: 32px;
+    height: 32px;
+    background-color: #2d5728;
+    background-image: url('./assets/execute.svg');
+    background-repeat: no-repeat;
+    background-position: center center;
+    border: 1px solid rgba(255,255,255,0.15);
+    border-top-color: rgba(255,255,255,0.2);
+    border-radius: 6px;
+    box-shadow: 0 0 6px rgba(0,0,0,0.15),
+                0 1px 6px rgba(255,255,255,0.02) inset;
+    cursor: pointer;
+    transition: background-color 0.1s;
+}
+
+button#execute:hover {
+    background-color: #31632b;
 }
 
 #extra-output .tabs {
     display: flex;
     padding: 9px;
     width: 100%;
-    background-color: rgba(255,255,255,0.01);
-    border-bottom: 1px solid rgba(255,255,255,0.025);
-    border-radius: 6px 6px 0 0;
 }
 
 #extra-output .tabs button {

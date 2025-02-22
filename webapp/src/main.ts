@@ -11,33 +11,19 @@ import { Token } from './lib/types/token';
 import './style.css';
 
 
+hljs.configure({ classPrefix: 'token--' });
+hljs.registerLanguage('javascript', javascript);
+hljs.registerLanguage('yaml', yml);
+
+
 const state = {
     currentTab: 'ast',
     code: '',
     tokens: [] as Token[],
-    ast: {  },
+    ast: { },
     consoleOutput: '',
     error: null,
 };
-
-addEventListener('keyup', (ev) => {
-    if (ev.code == 'Enter' && ev.ctrlKey) {
-        ev.preventDefault();
-
-        console.clear();
-        state.consoleOutput = '';
-
-        Evaluator.evaluate(state.code, (data) => {
-            state.consoleOutput += data.toString();
-            state.currentTab == 'console' && updateExtraOutput();
-        });
-    }
-});
-
-
-hljs.configure({ classPrefix: 'token--' });
-hljs.registerLanguage('javascript', javascript);
-hljs.registerLanguage('yaml', yml);
 
 
 const textarea = document.querySelector('textarea')!;
@@ -51,6 +37,20 @@ document.querySelectorAll('#extra-output .tabs button')
 
         tabElement.addEventListener('click', () => changeTab(tabId));
     });
+
+textarea.addEventListener('input', () => onInput());
+
+textarea.value = localStorage.getItem('au2js:source') ?? '';
+onInput();
+
+addEventListener('keyup', (ev) => {
+    if (ev.code == 'Enter' && ev.ctrlKey) {
+        ev.preventDefault();
+        executeCode();
+    }
+});
+
+document.querySelector('button#execute')!.addEventListener('click', executeCode);
 
 
 function changeTab(tabId: string) {
@@ -80,11 +80,6 @@ function process(input: string) {
         return { error: err.stack };
     }
 }
-
-textarea.addEventListener('input', () => onInput());
-
-textarea.value = localStorage.getItem('au2js:source') ?? '';
-onInput();
 
 function onInput() {
     if (textarea.value.trim().length == 0) {
@@ -144,4 +139,16 @@ function updateExtraOutput() {
 
     extraOutput.innerHTML = html;
     extraOutput.classList.remove('error');
+}
+
+function executeCode() {
+    console.clear();
+    state.consoleOutput = '';
+
+    Evaluator.evaluate(state.code, (data) => {
+        state.consoleOutput += data.toString();
+        state.currentTab == 'console' && updateExtraOutput();
+    });
+
+    changeTab('console');
 }

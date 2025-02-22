@@ -115,6 +115,11 @@ const functions = {
     Sin(number: AuNumber) {
         return Math.sin(+number);
     },
+    Sleep(time: AuNumber) {
+        //Atomics.wait(new Int32Array(new SharedArrayBuffer(4)), 0, 1, +time);
+        const d = new Date().getTime();
+        while (Date.now() - d < +time);
+    },
     String(value: string | number | boolean | null) {
         // if (typeof value == 'boolean')
         //     return value ? 'True' : 'False';
