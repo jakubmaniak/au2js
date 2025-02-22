@@ -1,23 +1,36 @@
-import './style.css';
-
 import hljs from 'highlight.js';
 import javascript from 'highlight.js/lib/languages/javascript';
 import yml from 'highlight.js/lib/languages/yaml';
+import JSON5 from 'json5';
 import YAML from 'yaml';
 import { Evaluator } from './lib/evaluator';
 import { Lexer } from './lib/lexer';
 import { Parser } from './lib/parser';
 import { Transpiler } from './lib/transpiler';
+import { Token } from './lib/types/token';
+import './style.css';
 
 
-let evalCode = '';
+const state = {
+    currentTab: 'ast',
+    code: '',
+    tokens: [] as Token[],
+    ast: {  },
+    consoleOutput: '',
+    error: null,
+};
 
 addEventListener('keyup', (ev) => {
     if (ev.code == 'Enter' && ev.ctrlKey) {
         ev.preventDefault();
 
         console.clear();
-        Evaluator.evaluate(evalCode);
+        state.consoleOutput = '';
+
+        Evaluator.evaluate(state.code, (data) => {
+            state.consoleOutput += data.toString();
+            state.currentTab == 'console' && updateExtraOutput();
+        });
     }
 });
 
@@ -26,76 +39,109 @@ hljs.configure({ classPrefix: 'token--' });
 hljs.registerLanguage('javascript', javascript);
 hljs.registerLanguage('yaml', yml);
 
-console.log(hljs.getLanguage('yaml')!.contains[12].beginKeywords += ' undefined');
-(hljs.getLanguage('yaml')!.contains[12].keywords as any)['literal'] += ' undefined';
 
 const textarea = document.querySelector('textarea')!;
 const output = document.querySelector('div#output')!;
-const outputB = document.querySelector('div#output-bottom')!;
+const extraOutput = document.querySelector('#extra-output div.content')!;
+
+document.querySelectorAll('#extra-output .tabs button')
+    .forEach((tab) => {
+        const tabElement = tab as HTMLElement;
+        const tabId = tabElement.dataset.tabId!;
+
+        tabElement.addEventListener('click', () => changeTab(tabId));
+    });
+
+
+function changeTab(tabId: string) {
+    state.currentTab = tabId;
+
+    document.querySelector('#extra-output .tabs button.active')?.classList.remove('active');
+    document.querySelector(`#extra-output .tabs button[data-tab-id="${tabId}"]`)?.classList.add('active');
+
+    updateExtraOutput();
+}
 
 
 function process(input: string) {
-    console.clear();
-
-    // return objectInspect(JSON5.parse(input));
-    let out: any;
-    let out2: any;
-
     try {
         const tokens = Lexer.getTokens(input);
         const ast = Parser.getAst(tokens);
-        out = ast;
-        out2 = Transpiler.transpile(ast);
+        const code = Transpiler.transpile(ast);
+
+        return {
+            code,
+            tokens,
+            ast,
+            error: null
+        };
     }
     catch (err: any) {
-        return [
-            { $$error: err.stack },
-            ''
-        ];
+        return { error: err.stack };
     }
-
-    return [
-        YAML.stringify(out),
-        out2
-    ];
 }
 
 textarea.addEventListener('input', () => onInput());
 
-textarea.value = localStorage.getItem('code') ?? '';
+textarea.value = localStorage.getItem('au2js:source') ?? '';
 onInput();
 
 function onInput() {
     if (textarea.value.trim().length == 0) {
         output.innerHTML = '';
-        outputB.innerHTML = '';
+        extraOutput.innerHTML = '';
         return;
     }
 
-    localStorage.setItem('code', textarea.value);
+    localStorage.setItem('au2js:source', textarea.value);
 
-    let tree: string | { $$error: string };
-    let code: string;
-    try {
-        [tree, code] = process(textarea.value);
-    }
-    catch {
+    const result = process(textarea.value);
+
+    if (result.error) {
+        state.error = result.error;
+
+        extraOutput.innerHTML = result.error;
+        extraOutput.classList.add('error');
         return;
     }
 
-    evalCode = code;
-    // Evaluator.evaluate(code);
+    state.code = result.code!;
+    state.tokens = result.tokens!;
+    state.ast = result.ast!;
 
-    if (typeof tree == 'string') {
-        const result = hljs.highlight(tree, { language: 'yaml', ignoreIllegals: true });
-        outputB.innerHTML = result.value;
-        outputB.classList.remove('error');
-    }
-    else {
-        outputB.innerHTML = tree.$$error;
-        outputB.classList.add('error');
+    const hl = hljs.highlight(state.code, { language: 'javascript', ignoreIllegals: true });
+    output.innerHTML = hl.value;
+
+    updateExtraOutput();
+}
+
+function updateExtraOutput() {
+    let html = '';
+
+    switch (state.currentTab) {
+        case 'ast': {
+            const yaml = YAML.stringify(state.ast);
+            const hl = hljs.highlight(yaml, { language: 'yaml', ignoreIllegals: true });
+            html = hl.value;
+            break;
+        }
+        case 'tokens': {
+            const tokens = state.tokens
+                .map((token) => (token.value !== undefined)
+                    ? `${token.type.padEnd(10, ' ')} ${JSON5.stringify(token.value)}`
+                    : token.type
+                )
+                .join('\n');
+            const hl = hljs.highlight(tokens, { language: 'javascript', ignoreIllegals: true });
+            html = hl.value;
+            break;
+        }
+        case 'console': {
+            html = state.consoleOutput;
+            break;
+        }
     }
 
-    const jsResult = hljs.highlight(code, { language: 'javascript', ignoreIllegals: true });
-    output.innerHTML = jsResult.value;
+    extraOutput.innerHTML = html;
+    extraOutput.classList.remove('error');
 }

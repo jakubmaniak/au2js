@@ -11,9 +11,18 @@
   </head>
   <body>
     <div id="app">
-      <textarea spellcheck="false"></textarea>
+      <textarea spellcheck="false" placeholder="Source code"></textarea>
       <div id="output"></div>
-      <div id="output-bottom"></div>
+      <div id="extra-output">
+        <div class="header">
+          <div class="tabs">
+            <button class="active" data-tab-id="ast">AST</button>
+            <button data-tab-id="tokens">Tokens</button>
+            <button data-tab-id="console">Console output</button>
+          </div>
+        </div>
+        <div class="content"></div>
+      </div>
     </div>
     <script type="module" src="/src/main.ts"></script>
   </body>

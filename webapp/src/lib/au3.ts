@@ -237,6 +237,6 @@ class Binary {
 }
 
 
-const au3 = Object.freeze(Object.assign(macros, functions));
+const au3 = Object.assign(macros, functions);
 
 export default au3;

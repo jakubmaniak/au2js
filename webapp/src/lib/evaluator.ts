@@ -1,17 +1,26 @@
 import au3 from './au3';
+import { ConsoleHandler } from './console-handler';
 
+
+const lib = ConsoleHandler.injectTo(au3);
 
 export class Evaluator {
-    private constructor(private code: string) { }
+    private constructor(
+        private code: string,
+        private onConsoleWrite?: (data: any) => void
+    ) { }
 
-    static evaluate(code: string) {
-        return new Evaluator(code).run();
+    static evaluate(code: string, onConsoleWrite?: (data: any) => void) {
+        return new Evaluator(code, onConsoleWrite).run();
     }
 
     private run() {
-        // eval(this.code);
+        if (this.onConsoleWrite) {
+            ConsoleHandler.setCallback(this.onConsoleWrite);
+            this.onConsoleWrite = undefined;
+        }
 
-        const require = (_path: string) => au3;
+        const require = (_path: string) => lib;
         new Function('require', this.code).call(null, require);
     }
 }

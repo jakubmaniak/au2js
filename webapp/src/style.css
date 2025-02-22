@@ -4,6 +4,22 @@
     padding: 0;
 }
 
+::-webkit-scrollbar {
+    width: 4px;
+    height: 4px;
+}
+
+::-webkit-scrollbar-button {
+    width: 8px;
+    height: 8px;
+    background-color: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+    background-color: #505054;
+    border-radius: 2px;
+}
+
 body {
     display: block;
     background-color: #101014;
@@ -13,14 +29,21 @@ body {
 #app {
     display: grid;
     grid-template:
-        'in outa' 1fr
-        'in outb' 1fr / 1fr 1fr;
+        'in output' 1fr
+        'in extra' 1fr / 1fr 1fr;
+    gap: 12px;
+    padding: 18px;
     height: 100vh;
 }
 
-textarea, #output, #output-bottom {
-    padding: 12px;
-    background-color: transparent;
+textarea, #output, #extra-output {
+    padding: 12px 15px;
+    background-color: #141418;
+    border: 1px solid #202024;
+    border-top-color: #242428;
+    border-radius: 8px;
+    box-shadow: 0 0 6px rgba(0,0,0,0.15),
+                0 1px 6px rgba(255,255,255,0.02) inset;
     color: #d0dade;
     font-family: 'JetBrains Mono';
     font-size: 14px;
@@ -29,28 +52,76 @@ textarea, #output, #output-bottom {
 
 textarea {
     grid-area: in;
-    flex: 2;
-    border: 0;
     outline: none;
     resize: none;
 }
 
 #output,
-#output-bottom {
-    grid-area: outa;
-    flex: 3;
-    border-left: 1px solid #202024;
+#extra-output {
+    grid-area: output;
     white-space: pre-wrap;
     color: #bed0e2;
+}
+
+#output {
     overflow: auto;
 }
 
-#output-bottom {
-    grid-area: outb;
-    border-top: 1px solid #202024;
+#extra-output {
+    grid-area: extra;
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    padding: 0;
+    overflow: hidden;
 }
 
-#output.error {
+#extra-output .header {
+    display: flex;
+    flex-shrink: 0;
+}
+
+#extra-output .tabs {
+    display: flex;
+    padding: 9px;
+    width: 100%;
+    background-color: rgba(255,255,255,0.01);
+    border-bottom: 1px solid rgba(255,255,255,0.025);
+    border-radius: 6px 6px 0 0;
+}
+
+#extra-output .tabs button {
+    padding: 6px 12px;
+    background-color: transparent;
+    border: 1px solid transparent;
+    border-radius: 6px;
+    color: #d0d0d4;
+    font-family: 'Inter', sans-serif;
+    font-size: 13px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: color 0.1s;
+}
+
+#extra-output .tabs button:hover {
+    color: #f0f0f4;
+}
+
+#extra-output .tabs button.active {
+    background-color: rgba(240,240,255,0.05);
+    border-color: rgba(240,240,255,0.05);
+    box-shadow: 0 1px 6px rgba(255,255,255,0.02) inset;
+    color: #ffffff;
+}
+
+#extra-output .content {
+    flex-grow: 1;
+    padding: 12px 15px;
+    margin-right: 6px;
+    overflow: auto;
+}
+
+#extra-output .content.error {
     color: #d04040;
 }
 
