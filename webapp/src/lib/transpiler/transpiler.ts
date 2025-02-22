@@ -4,11 +4,14 @@ import { NodeType } from '../types/node-type';
 import { Scope } from './scope';
 
 
-const macros = new Set(['COMPILED', 'CR', 'CRLF', 'ERROR', 'EXTENDED', 'HOUR', 'LF', 'MDAY', 'MIN', 'MON', 'MIN', 'MON', 'MSEC', 'OSLANG', 'SEC', 'SW_SHOW', 'TAB', 'WDAY', 'YDAY', 'YEAR'])
+const macros = new Set([
+    'AUTOITVERSION', 'COMPILED', 'CR', 'CRLF', 'ERROR', 'EXTENDED', 'HOUR', 'LF',
+    'MDAY', 'MIN', 'MON', 'MSEC', 'OSLANG', 'SEC', 'SW_SHOW', 'TAB', 'WDAY', 'YDAY', 'YEAR'
+]);
 
 const builtin = new Set([
-    'Abs', 'ACos', 'ASin', 'ATan', 'AdlibRegister', 'AdlibUnregister', 'Asc', 'AscW', 'AutoItSetOption',
-    'BinaryToString', 'BitAND', 'BitNOT', 'BitOR', 'BitRotate', 'BitShift', 'BitXOR',
+    'Abs', 'ACos', 'Asc', 'AscW', 'ASin', 'ATan', 'AdlibRegister', 'AdlibUnregister', 'Asc', 'AscW', 'AutoItSetOption',
+    'Binary', 'BinaryToString', 'BitAND', 'BitNOT', 'BitOR', 'BitRotate', 'BitShift', 'BitXOR',
     'Ceiling', 'Chr', 'ChrW', 'ConsoleRead', 'ConsoleWrite', 'Cos',
     'Dec', 'DllCall', 'DllClose', 'DllOpen',
     'Exp',
