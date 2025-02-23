@@ -249,15 +249,17 @@ export class Transpiler {
             }
             return 'au3.' + name;
         }
+        else if (node.type == NodeType.Group) {
+            return '(' + this.expression(node.expression) + ')';
+        }
         else if (node.type == NodeType.UnaryExpression) {
             let argument = this.expression(node.argument);
 
-            const op = (
-                node.operator == 'Not' ? '!'
-                : node.operator
-            );
+            if (node.operator == 'Not') {
+                return '!' + argument;
+            }
 
-            return op + argument;
+            return node.operator + '(' + argument + ')';
         }
         else if (node.type == NodeType.BinaryExpression) {
             let left = this.expression(node.left);
@@ -282,6 +284,7 @@ export class Transpiler {
                 + ' ' + (
                     node.operator == '&' ? (anyString ? '+' : "+''+")
                     : node.operator == '=' ? '=='
+                    : node.operator == '^' ? '**'
                     : node.operator == 'And' ? '&&'
                     : node.operator == 'Or' ? '||'
                     : node.operator
@@ -298,6 +301,9 @@ export class Transpiler {
         else if (node.type == NodeType.SubscriptExpression) {
             return this.expression(node.target)
                 + node.subscripts.map((s) => '[' + this.expression(s) + ']').join('');
+        }
+        else if (node.type == NodeType.MemberExpression) {
+            return this.expression(node.target) + '.' + node.property;
         }
 
         return '{UNKNOWN_EXPR}';

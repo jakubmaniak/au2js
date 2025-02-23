@@ -57,6 +57,10 @@ export type AstNode =
         right: AstNode
     }
     | {
+        type: NodeType.Group,
+        expression: AstNode
+    }
+    | {
         type: NodeType.SubscriptExpression,
         target: AstNode,
         subscripts: AstNode[]
@@ -64,8 +68,7 @@ export type AstNode =
     | {
         type: NodeType.MemberExpression,
         target: AstNode,
-        property: AstNode,
-        computed: boolean
+        property: string
     }
     | {
         type: NodeType.MacroCall,

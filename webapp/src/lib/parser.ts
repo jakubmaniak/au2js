@@ -1,3 +1,4 @@
+import { ExpressionParser } from './expression-parser';
 import { AstNode, TypedNode } from './types/ast-node';
 import { BlockType } from './types/block-type';
 import { NodeType } from './types/node-type';
@@ -10,12 +11,15 @@ export class Parser {
     private tree: TypedNode<NodeType.Program> = { type: NodeType.Program, children: [] };
     private i = -1;
     private tok!: Token;
+    private exprParser: ExpressionParser;
 
-    get eos() {
+    private get eos() {
         return this.i >= this.tokens.length - 1;
     }
 
-    private constructor(private tokens: Token[]) { }
+    private constructor(private tokens: Token[]) {
+        this.exprParser = new ExpressionParser(tokens);
+    }
 
     static getAst(tokens: Token[]) {
         return new Parser(tokens).run();
@@ -136,6 +140,10 @@ export class Parser {
     }
 
     private eatStatement(blockType: BlockType, { oneline = false } = { }): AstNode | null {
+        if (this.match(TokenType.EOL)) {
+            return null;
+        }
+
         // VarDeclaration
         if (this.match(TokenType.Keyword, ['Local', 'Global', 'Dim', 'Static', 'Const'])) {
             const node = this.eatVarDeclaration();
@@ -159,8 +167,8 @@ export class Parser {
             const name = this.eat(TokenType.Identifier)
                 || expected('Identifier');
 
-            this.eat(TokenType.Bracket, '(')
-                || expected('Bracket', '(');
+            this.eat(TokenType.LParen)
+                || expected(TokenType.LParen);
             const params = this.eatParameters();
             this.eat(TokenType.EOL)
                 || expected('EOL');
@@ -490,149 +498,157 @@ export class Parser {
         return null;
     }
 
+    // private eatExpression({ assignTarget = false } = { }): AstNode | null {
+    //     let expression: AstNode;
+    //     let token: Token | null;
+
+    //     let unaryOperator: string | null = null;
+
+    //     if (this.eat(TokenType.Keyword, 'Not')) {
+    //         unaryOperator = 'Not';
+    //     }
+    //     else if (this.eat(TokenType.Operator, '+')) {
+    //         unaryOperator = '+';
+    //     }
+    //     else if (this.eat(TokenType.Operator, '-')) {
+    //         unaryOperator = '-';
+    //     }
+
+    //     if (token = this.eat(TokenType.Number)) {
+    //         expression = {
+    //             type: NodeType.PrimitiveValue,
+    //             kind: 'number',
+    //             value: token.value
+    //         };
+    //     }
+    //     else if (token = this.eat(TokenType.String)) {
+    //         expression = {
+    //             type: NodeType.PrimitiveValue,
+    //             kind: 'string',
+    //             value: token.value
+    //         };
+    //     }
+    //     else if ((token = this.eat(TokenType.Keyword, 'True')) || (token = this.eat(TokenType.Keyword, 'False'))) {
+    //         expression = {
+    //             type: NodeType.PrimitiveValue,
+    //             kind: 'bool',
+    //             value: token.value.toLowerCase()
+    //         };
+    //     }
+    //     else if (token = this.eat(TokenType.Keyword, 'Null')) {
+    //         expression = {
+    //             type: NodeType.PrimitiveValue,
+    //             kind: 'null',
+    //             value: 'null'
+    //         };
+    //     }
+    //     else if (token = this.eat(TokenType.Keyword, 'Default')) {
+    //         expression = {
+    //             type: NodeType.PrimitiveValue,
+    //             kind: 'default',
+    //             value: 'default'
+    //         };
+    //     }
+    //     else if (token = this.eat(TokenType.Variable)) {
+    //         expression = {
+    //             type: NodeType.VarReference,
+    //             name: token.value
+    //         };
+    //     }
+    //     else if (token = this.eat(TokenType.Macro)) {
+    //         expression = {
+    //             type: NodeType.MacroCall,
+    //             name: token.value
+    //         };
+    //     }
+    //     else if (token = this.eat(TokenType.Identifier)) {
+    //         expression = {
+    //             type: NodeType.Identifier,
+    //             name: token.value
+    //         };
+    //     }
+    //     else return null;
+
+    //     while (!this.match(TokenType.EOL)) {
+    //         // $a[x][y], a()[x][y]
+    //         if ((expression.type == NodeType.VarReference || expression.type == NodeType.FunctionCall) && this.match(TokenType.LSquare)) {
+    //             const subscripts = this.eatSubscripts();
+    //             expression = {
+    //                 type: NodeType.SubscriptExpression,
+    //                 target: expression,
+    //                 subscripts
+    //             } as TypedNode<NodeType.SubscriptExpression>;
+    //         }
+
+    //         // $a(x, y), a(x, y), $a[0](x, y)
+    //         else if (
+    //             (
+    //                 (expression as any).type == NodeType.Identifier
+    //                 || (expression as any).type == NodeType.VarReference
+    //                 || expression.type == NodeType.SubscriptExpression
+    //             )
+    //             && this.match(TokenType.LParen)
+    //         ) {
+
+    //             const args = this.eatArguments();
+
+    //             expression = {
+    //                 type: NodeType.FunctionCall,
+    //                 target: expression,
+    //                 arguments: args
+    //             } as TypedNode<NodeType.FunctionCall>;
+    //         }
+    //         else {
+    //             break;
+    //         }
+    //     }
+
+
+    //     const isLogicalOp = this.match(TokenType.Keyword, ['Or', 'And']);
+
+    //     const isValidOperator = isLogicalOp
+    //         || 
+    //         (
+    //             assignTarget
+    //             ? this.match(TokenType.Operator)
+    //                 && !this.match(TokenType.Operator, ['=', '+=', '-=', '*=', '/=', '&='])
+    //             : this.match(TokenType.Operator)
+    //         );
+
+    //     if (isValidOperator) {
+    //         const operator = this.tok.value;
+    //         this.advance(1);
+
+    //         const right = this.eatExpression();
+    //         if (!right) {
+    //             this.error('Unexpected error parsing right side of binary expression');
+    //         }
+
+    //         expression = {
+    //             type: NodeType.BinaryExpression,
+    //             operator,
+    //             left: expression,
+    //             right
+    //         } as TypedNode<NodeType.BinaryExpression>;
+    //     }
+
+    //     if (unaryOperator) {
+    //         expression = {
+    //             type: NodeType.UnaryExpression,
+    //             operator: unaryOperator,
+    //             argument: expression
+    //         };
+    //     }
+
+    //     return expression;
+    // }
+
     private eatExpression({ assignTarget = false } = { }): AstNode | null {
-        let expression: AstNode;
-        let token: Token | null;
+        const result = this.exprParser.parse(this.i);
+        this.i = result.position;
+        this.tok = this.tokens[this.i];
 
-        let unaryOperator: string | null = null;
-
-        if (this.eat(TokenType.Keyword, 'Not')) {
-            unaryOperator = 'Not';
-        }
-        else if (this.eat(TokenType.Operator, '+')) {
-            unaryOperator = '+';
-        }
-        else if (this.eat(TokenType.Operator, '-')) {
-            unaryOperator = '-';
-        }
-
-        if (token = this.eat(TokenType.Number)) {
-            expression = {
-                type: NodeType.PrimitiveValue,
-                kind: 'number',
-                value: token.value
-            };
-        }
-        else if (token = this.eat(TokenType.String)) {
-            expression = {
-                type: NodeType.PrimitiveValue,
-                kind: 'string',
-                value: token.value
-            };
-        }
-        else if ((token = this.eat(TokenType.Keyword, 'True')) || (token = this.eat(TokenType.Keyword, 'False'))) {
-            expression = {
-                type: NodeType.PrimitiveValue,
-                kind: 'bool',
-                value: token.value.toLowerCase()
-            };
-        }
-        else if (token = this.eat(TokenType.Keyword, 'Null')) {
-            expression = {
-                type: NodeType.PrimitiveValue,
-                kind: 'null',
-                value: 'null'
-            };
-        }
-        else if (token = this.eat(TokenType.Keyword, 'Default')) {
-            expression = {
-                type: NodeType.PrimitiveValue,
-                kind: 'default',
-                value: 'default'
-            };
-        }
-        else if (token = this.eat(TokenType.Variable)) {
-            expression = {
-                type: NodeType.VarReference,
-                name: token.value
-            };
-        }
-        else if (token = this.eat(TokenType.Macro)) {
-            expression = {
-                type: NodeType.MacroCall,
-                name: token.value
-            };
-        }
-        else if (token = this.eat(TokenType.Identifier)) {
-            expression = {
-                type: NodeType.Identifier,
-                name: token.value
-            };
-        }
-        else return null;
-
-        while (!this.match(TokenType.EOL)) {
-            // $a[x][y], a()[x][y]
-            if ((expression.type == NodeType.VarReference || expression.type == NodeType.FunctionCall) && this.match(TokenType.Bracket, '[')) {
-                const subscripts = this.eatSubscripts();
-                expression = {
-                    type: NodeType.SubscriptExpression,
-                    target: expression,
-                    subscripts
-                } as TypedNode<NodeType.SubscriptExpression>;
-            }
-
-            // $a(x, y), a(x, y), $a[0](x, y)
-            else if (
-                (
-                    (expression as any).type == NodeType.Identifier
-                    || (expression as any).type == NodeType.VarReference
-                    || expression.type == NodeType.SubscriptExpression
-                )
-                && this.match(TokenType.Bracket, '(')
-            ) {
-
-                const args = this.eatArguments();
-
-                expression = {
-                    type: NodeType.FunctionCall,
-                    target: expression,
-                    arguments: args
-                } as TypedNode<NodeType.FunctionCall>;
-            }
-            else {
-                break;
-            }
-        }
-
-
-        const isLogicalOp = this.match(TokenType.Keyword, ['Or', 'And']);
-
-        const isValidOperator = isLogicalOp
-            || 
-            (
-                assignTarget
-                ? this.match(TokenType.Operator)
-                    && !this.match(TokenType.Operator, ['=', '+=', '-=', '*=', '/=', '&='])
-                : this.match(TokenType.Operator)
-            );
-
-        if (isValidOperator) {
-            const operator = this.tok.value;
-            this.advance(1);
-
-            const right = this.eatExpression();
-            if (!right) {
-                this.error('Unexpected error parsing right side of binary expression');
-            }
-
-            expression = {
-                type: NodeType.BinaryExpression,
-                operator,
-                left: expression,
-                right
-            } as TypedNode<NodeType.BinaryExpression>;
-        }
-
-        if (unaryOperator) {
-            expression = {
-                type: NodeType.UnaryExpression,
-                operator: unaryOperator,
-                argument: expression
-            };
-        }
-
-        return expression;
+        return result.stack[0] as AstNode;
     }
 
     private eatSubscripts(): AstNode[] {
@@ -641,18 +657,18 @@ export class Parser {
         const subscripts: AstNode[] = [];
 
         while (!this.eat(TokenType.EOL)) {
-            this.eat(TokenType.Bracket, '[')
-                || expected(TokenType.Bracket, '[');
+            this.eat(TokenType.LSquare)
+                || expected(TokenType.LSquare);
 
             const subscript = this.eatExpression()
                 || expected('Expression');
 
-            this.eat(TokenType.Bracket, ']')
-                || expected(TokenType.Bracket, ']');
+            this.eat(TokenType.RSquare)
+                || expected(TokenType.RSquare);
 
             subscripts.push(subscript);
 
-            if (!this.match(TokenType.Bracket, '[')) {
+            if (!this.match(TokenType.LSquare)) {
                 break;
             }
         }
@@ -666,17 +682,17 @@ export class Parser {
         const subscripts: (AstNode | undefined)[] = [];
 
         while (!this.match(TokenType.EOL)) {
-            this.eat(TokenType.Bracket, '[')
-                || expected(TokenType.Bracket, '[');
+            this.eat(TokenType.LSquare)
+                || expected(TokenType.LSquare);
 
             const subscript = this.eatExpression() ?? undefined;
 
-            this.eat(TokenType.Bracket, ']')
-                || expected.many([TokenType.Bracket, ']'], 'subscript value');
+            this.eat(TokenType.RSquare)
+                || expected.many(TokenType.RSquare, 'subscript value');
 
             subscripts.push(subscript);
 
-            if (!this.match(TokenType.Bracket, '[')) {
+            if (!this.match(TokenType.LSquare)) {
                 break;
             }
         }
@@ -728,7 +744,7 @@ export class Parser {
                 name: variable.value
             };
 
-            if (this.match(TokenType.Bracket, '[')) {
+            if (this.match(TokenType.LSquare)) {
                 const subscripts = this.eatSubscriptsEmptyAllowed();
                 declaration.subscripts = subscripts;
             }
@@ -736,12 +752,12 @@ export class Parser {
             if (this.eat(TokenType.Operator, '=')) {
                 let expr: AstNode;
 
-                if (this.match(TokenType.Bracket, '[')) {
+                if (this.match(TokenType.LSquare)) {
                     expr = this.eatArrayInitializer();
                 }
                 else {
                     expr = this.eatExpression()
-                    || expected('a variable initializer');
+                        || expected('a variable initializer');
                 }
 
                 declaration.value = expr;
@@ -774,7 +790,7 @@ export class Parser {
         //     name: variable.value
         // };
 
-        // if (this.match(TokenType.Bracket, '[')) {
+        // if (this.match(TokenType.LSquare)) {
         //     const subscripts = this.eatSubscripts();
 
         //     target = {
@@ -797,7 +813,7 @@ export class Parser {
                 value
             };
         }
-        // else if (this.match(TokenType.Bracket, '(')) {
+        // else if (this.match(TokenType.LParen)) {
         //     const args = this.eatArguments();
 
         //     let target: AstNode =  {
@@ -835,17 +851,17 @@ export class Parser {
     private eatArrayInitializer(): TypedNode<NodeType.ArrayInitializer> {
         const expected = this.parsing('an array initializer').expected;
 
-        this.eat(TokenType.Bracket, '[')
-            || expected(TokenType.Bracket);
+        this.eat(TokenType.LSquare)
+            || expected(TokenType.LSquare);
 
         const array: AstNode[] = [];
 
         while (true) {
-            if (this.match(TokenType.Bracket, '[')) {
+            if (this.match(TokenType.LSquare)) {
                 const element = this.eatArrayInitializer();
                 array.push(element);
             }
-            else if (this.eat(TokenType.Bracket, ']')) {
+            else if (this.eat(TokenType.RSquare)) {
                 break;
             }
             else {
@@ -855,11 +871,11 @@ export class Parser {
                 array.push(element);
             }
 
-            if (this.match(TokenType.Comma) && !this.peek(TokenType.Bracket, ']')) {
+            if (this.match(TokenType.Comma) && !this.peek(TokenType.RSquare)) {
                 this.eat(TokenType.Comma);
                 continue;
             }
-            else if (this.eat(TokenType.Bracket, ']')) break;
+            else if (this.eat(TokenType.RSquare)) break;
             else expected.not();
         }
 
@@ -874,10 +890,10 @@ export class Parser {
 
         const expected = this.parsing('arguments').expected;
 
-        this.eat(TokenType.Bracket, '(')
-            || expected(TokenType.Bracket, '(');
+        this.eat(TokenType.LParen)
+            || expected(TokenType.LParen);
 
-        while (!this.match(TokenType.Bracket, ')')) {
+        while (!this.match(TokenType.RParen)) {
             const arg = this.eatExpression()
                 || expected('Expression');
 
@@ -888,8 +904,8 @@ export class Parser {
             }
         }
 
-        this.eat(TokenType.Bracket, ')')
-            || expected('Bracket', ')');
+        this.eat(TokenType.RParen)
+            || expected(TokenType.RParen);
 
         return args;
     }
@@ -897,7 +913,7 @@ export class Parser {
     private eatParameters(): TypedNode<NodeType.Parameter>[] {
         const params: TypedNode<NodeType.Parameter>[] = [];
 
-        while (!this.match(TokenType.Bracket, ')')) {
+        while (!this.match(TokenType.RParen)) {
             const constant = this.eat(TokenType.Keyword, 'Const');
             const byRef = this.eat(TokenType.Keyword, 'ByRef');
 
@@ -925,8 +941,8 @@ export class Parser {
             }
         }
 
-        this.eat(TokenType.Bracket, ')')
-            || this.parsing('parameters').expected('Bracket', ')');
+        this.eat(TokenType.RParen)
+            || this.parsing('parameters').expected(TokenType.RParen);
 
         return params;
     }

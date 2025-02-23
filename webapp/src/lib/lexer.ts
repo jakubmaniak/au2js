@@ -184,8 +184,20 @@ export class Lexer {
                 }
                 else this.error('Unexpected end of input while parsing a number');
             }
-            else if (this.ch.match(/[()\[\]]/)) {
-                this.tokens.push({ type: TokenType.Bracket, value: this.ch });
+            else if (this.ch == '(') {
+                this.tokens.push({ type: TokenType.LParen, value: '(' });
+                this.advance(1);
+            }
+            else if (this.ch == ')') {
+                this.tokens.push({ type: TokenType.RParen, value: ')' });
+                this.advance(1);
+            }
+            else if (this.ch == '[') {
+                this.tokens.push({ type: TokenType.LSquare, value: '[' });
+                this.advance(1);
+            }
+            else if (this.ch == ']') {
+                this.tokens.push({ type: TokenType.RSquare, value: ']' });
                 this.advance(1);
             }
             else if (this.ch.match(/[_a-z]/i)) {
