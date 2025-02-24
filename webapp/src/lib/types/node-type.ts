@@ -9,6 +9,7 @@ export enum NodeType {
     ArrayInitializer = 'ArrayInitializer',
     UnaryExpression = 'UnaryExpression',
     BinaryExpression = 'BinaryExpression',
+    Group = 'Group',
     SubscriptExpression = 'SubscriptExpression',
     MemberExpression = 'MemberExpression',
     MacroCall = 'MacroCall',

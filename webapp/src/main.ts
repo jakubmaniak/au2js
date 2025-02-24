@@ -64,8 +64,10 @@ function changeTab(tabId: string) {
 
 
 function process(input: string) {
+    let tokens: Token[] = [];
+
     try {
-        const tokens = Lexer.getTokens(input);
+        tokens = Lexer.getTokens(input);
         const ast = Parser.getAst(tokens);
         const code = Transpiler.transpile(ast);
 
@@ -77,7 +79,10 @@ function process(input: string) {
         };
     }
     catch (err: any) {
-        return { error: err.stack };
+        return {
+            error: err.stack,
+            tokens
+        };
     }
 }
 
@@ -94,6 +99,7 @@ function onInput() {
 
     if (result.error) {
         state.error = result.error;
+        state.tokens = result.tokens;
 
         extraOutput.innerHTML = result.error;
         extraOutput.classList.add('error');

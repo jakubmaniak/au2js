@@ -224,7 +224,11 @@ export class Transpiler {
 
     private expression(node: AstNode): string {
         if (node.type == NodeType.PrimitiveValue) {
-            return node.value;
+            return (
+                node.kind == 'default'
+                ? 'au3.Default'
+                : node.value
+            );
         }
         else if (node.type == NodeType.Identifier) {
             const name = node.name.toLowerCase();
@@ -249,15 +253,17 @@ export class Transpiler {
             }
             return 'au3.' + name;
         }
+        else if (node.type == NodeType.Group) {
+            return '(' + this.expression(node.expression) + ')';
+        }
         else if (node.type == NodeType.UnaryExpression) {
             let argument = this.expression(node.argument);
 
-            const op = (
-                node.operator == 'Not' ? '!'
-                : node.operator
-            );
+            if (node.operator == 'Not') {
+                return '!' + argument;
+            }
 
-            return op + argument;
+            return node.operator + '(' + argument + ')';
         }
         else if (node.type == NodeType.BinaryExpression) {
             let left = this.expression(node.left);
@@ -278,15 +284,22 @@ export class Transpiler {
                 (node.right.type == NodeType.PrimitiveValue && node.right.kind == 'string')
             );
 
-            return left
-                + ' ' + (
-                    node.operator == '&' ? (anyString ? '+' : "+''+")
-                    : node.operator == '=' ? '=='
-                    : node.operator == 'And' ? '&&'
-                    : node.operator == 'Or' ? '||'
-                    : node.operator
-                ) + ' '
-                + right;
+            switch (node.operator) {
+                case '&':
+                    return `${left} ${anyString ? '+' : "+''+"} (${right})`;
+                case '=':
+                    return `au3.CompareCI(${left}, ${right})`;
+                case 'Or':
+                    return `au3.Or(${left}, ${right})`;
+                case 'And':
+                    return `au3.And(${left}, ${right})`;
+                case '<>':
+                    return `${left} != ${right}`;
+                case '^':
+                    return `${left} ** ${right}`;
+                default:
+                    return `${left} ${node.operator} ${right}`;
+            }
         }
         else if (node.type == NodeType.FunctionCall) {
             const args = node.arguments.map((arg) => this.expression(arg)).join(', ');
@@ -298,6 +311,9 @@ export class Transpiler {
         else if (node.type == NodeType.SubscriptExpression) {
             return this.expression(node.target)
                 + node.subscripts.map((s) => '[' + this.expression(s) + ']').join('');
+        }
+        else if (node.type == NodeType.MemberExpression) {
+            return this.expression(node.target) + '.' + node.property;
         }
 
         return '{UNKNOWN_EXPR}';
