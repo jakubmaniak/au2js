@@ -7,26 +7,20 @@ import { TokenType } from './types/token-type';
 type Stack = (Token | AstNode)[];
 
 
-function node(type: NodeType, props: Record<string, any> = { }) {
-    return {
-        type: type,
-        ...props
-    } as AstNode;
-}
-
-
 export class ExpressionParser {
     private pos = 0;
     private token!: Token;
     private stack: Stack = [];
+    private leftHand = false;
 
     constructor(private tokens: Token[]) { }
 
-    parse(position: number) {
+    parse(position: number, { leftHand = false } = { }) {
         this.pos = position;
         this.token = this.tokens[position];
-
         this.stack = [];
+        this.leftHand = leftHand;
+
         this.expression();
 
         return {
@@ -36,7 +30,72 @@ export class ExpressionParser {
     }
 
     private expression() {
+        this.logicalComparison();
+    }
+
+    private logicalComparison() {
+        this.comparison();
+
+        // And & Or have equal precedence in AutoIt
+        while (this.match(TokenType.Keyword, 'And') || this.match(TokenType.Keyword, 'Or')) {
+            const op = this.eat(TokenType.Keyword)!;
+            this.comparison();
+
+            const right = this.popNode();
+            const left = this.popNode();
+
+            this.push({
+                type: NodeType.BinaryExpression,
+                operator: op.value,
+                left,
+                right
+            });
+        }
+    }
+
+    private comparison() {
+        this.concatenation();
+
+        while (
+            (this.match(TokenType.Operator, '=') && !this.leftHand)
+            || this.match(TokenType.Operator, '==')
+            || this.match(TokenType.Operator, '<>')
+            || this.match(TokenType.Operator, '<')
+            || this.match(TokenType.Operator, '>')
+            || this.match(TokenType.Operator, '<=')
+            || this.match(TokenType.Operator, '>=')
+        ) {
+            const op = this.eat(TokenType.Operator)!;
+            this.concatenation();
+
+            const right = this.popNode();
+            const left = this.popNode();
+
+            this.push({
+                type: NodeType.BinaryExpression,
+                operator: op.value,
+                left,
+                right
+            });
+        }
+    }
+
+    private concatenation() {
         this.sum();
+
+        while (this.eat(TokenType.Operator, '&')) {
+            this.sum();
+
+            const right = this.popNode();
+            const left = this.popNode();
+
+            this.push({
+                type: NodeType.BinaryExpression,
+                operator: '&',
+                left,
+                right
+            });
+        }
     }
 
     private sum() {
@@ -259,7 +318,8 @@ export class ExpressionParser {
             return null;
         }
 
-        if ((type !== undefined && this.token.type != type) || (value !== undefined && this.token.value != value)) {
+        if ((type !== undefined && this.token.type != type)
+            || (value !== undefined && this.token.value != value)) {
             return null;
         }
 
@@ -279,21 +339,6 @@ export class ExpressionParser {
         }
 
         return this.token;
-    }
-
-    private eatMany(...types: TokenType[]) {
-        if (this.pos + 1 >= this.tokens.length) {
-            return null;
-        }
-
-        if (types.length && !types.includes(this.token.type)) {
-            return null;
-        }
-
-        const token = this.token;
-        this.token = this.tokens[++this.pos];
-
-        return token;
     }
 
     private matchMany(...types: TokenType[]) {
