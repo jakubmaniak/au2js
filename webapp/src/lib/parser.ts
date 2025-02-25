@@ -1,5 +1,5 @@
 import { ExpressionParser } from './expression-parser';
-import { AstNode, TypedNode } from './types/ast-node';
+import { AstNode } from './types/ast-node';
 import { BlockType } from './types/block-type';
 import { NodeType } from './types/node-type';
 import { Token } from './types/token';
@@ -8,7 +8,7 @@ import { VarDeclaration } from './types/var-declaration';
 
 
 export class Parser {
-    private tree: TypedNode<NodeType.Program> = { type: NodeType.Program, children: [] };
+    private tree: AstNode<NodeType.Program> = { type: NodeType.Program, children: [] };
     private i = -1;
     private tok!: Token;
     private exprParser: ExpressionParser;
@@ -179,7 +179,7 @@ export class Parser {
             this.eat(TokenType.EOL)
                 || expected(TokenType.EOL);
 
-            const node: TypedNode<NodeType.FunctionDeclaration> = {
+            const node: AstNode<NodeType.FunctionDeclaration> = {
                 type: NodeType.FunctionDeclaration,
                 name: name.value,
                 parameters: params,
@@ -411,7 +411,7 @@ export class Parser {
             this.eatWhile(TokenType.EOL);
 
 
-            let cases: AstNode[] = [];
+            let cases: AstNode<NodeType.SwitchCase>[] = [];
 
             while (this.eat(TokenType.Keyword, 'Case')) {
                 const value = this.eatExpression()
@@ -486,7 +486,7 @@ export class Parser {
             const expression = this.eatExpression();
 
             if (expression) {
-                const node: TypedNode<NodeType.ExpressionStatement> = {
+                const node: AstNode<NodeType.ExpressionStatement> = {
                     type: NodeType.ExpressionStatement,
                     expression
                 };
@@ -530,7 +530,7 @@ export class Parser {
         return subscripts;
     }
 
-    private eatVarDeclaration(): TypedNode<NodeType.VarDeclaration> | null {
+    private eatVarDeclaration(): AstNode<NodeType.VarDeclaration> | null {
         if (!this.match(TokenType.Keyword, ['Local', 'Global', 'Dim', 'Static', 'Const'])) {
             return null;
         }
@@ -634,7 +634,7 @@ export class Parser {
         }
     }
 
-    private eatArrayInitializer(): TypedNode<NodeType.ArrayInitializer> {
+    private eatArrayInitializer(): AstNode<NodeType.ArrayInitializer> {
         const expected = this.parsing('an array initializer').expected;
 
         this.eat(TokenType.LSquare)
@@ -671,33 +671,8 @@ export class Parser {
         };
     }
 
-    private eatArguments(): AstNode[] {
-        const args: AstNode[] = [];
-
-        const expected = this.parsing('arguments').expected;
-
-        this.eat(TokenType.LParen)
-            || expected(TokenType.LParen);
-
-        while (!this.match(TokenType.RParen)) {
-            const arg = this.eatExpression()
-                || expected('Expression');
-
-            args.push(arg);
-
-            if (!this.eat(TokenType.Comma)) {
-                break;
-            }
-        }
-
-        this.eat(TokenType.RParen)
-            || expected(TokenType.RParen);
-
-        return args;
-    }
-
-    private eatParameters(): TypedNode<NodeType.Parameter>[] {
-        const params: TypedNode<NodeType.Parameter>[] = [];
+    private eatParameters(): AstNode<NodeType.Parameter>[] {
+        const params: AstNode<NodeType.Parameter>[] = [];
 
         while (!this.match(TokenType.RParen)) {
             const constant = this.eat(TokenType.Keyword, 'Const');
@@ -712,7 +687,7 @@ export class Parser {
                 isByRef: !!byRef,
                 isConst: !!constant,
                 defaultValue: undefined
-            } as TypedNode<NodeType.Parameter>;
+            } as AstNode<NodeType.Parameter>;
 
             if (this.eat(TokenType.Operator, '=')) {
                 const defaultValue = this.eatExpression()
@@ -733,7 +708,7 @@ export class Parser {
         return params;
     }
 
-    private eatBlock(blockType: BlockType): AstNode {
+    private eatBlock(blockType: BlockType): AstNode<NodeType.BlockStatement> {
         const statements: AstNode[] = [];
         //TODO: refactor to closings array or Map<BlockType, Set<string>>
         const closing = (
@@ -782,10 +757,6 @@ export class Parser {
             type: NodeType.BlockStatement,
             body: statements
         };
-    }
-
-    private error(msg: string): never {
-        throw new SyntaxError(msg);
     }
 
     private append(node: AstNode) {

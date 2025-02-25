@@ -305,10 +305,6 @@ export class ExpressionParser {
         return this.stack.pop();
     }
 
-    private popToken() {
-        return this.stack.pop() as Token<any>;
-    }
-
     private popNode() {
         return this.stack.pop() as AstNode;
     }

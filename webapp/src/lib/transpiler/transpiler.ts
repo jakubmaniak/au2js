@@ -1,4 +1,4 @@
-import { AstNode, TypedNode } from '../types/ast-node';
+import { AstNode } from '../types/ast-node';
 import { BlockType } from '../types/block-type';
 import { NodeType } from '../types/node-type';
 import { Scope } from './scope';
@@ -47,7 +47,11 @@ export class Transpiler {
     private lines: string[] = ['const au3 = require("au3");'];
     private scope = new Scope(BlockType.Program);
 
-    private constructor(private tree: AstNode) { }
+    private constructor(private tree: AstNode<NodeType.Program>) { }
+
+    static transpile(tree: AstNode<NodeType.Program>) {
+        return new Transpiler(tree).run();
+    }
 
     private run(): string {
         if (this.tree.type != NodeType.Program) return '';
@@ -155,14 +159,14 @@ export class Transpiler {
         return this.indent(line);
     }
 
-    private exit(node: TypedNode<NodeType.Exit>) {
+    private exit(node: AstNode<NodeType.Exit>) {
         if (!node.code) return 'process.exit();';
         return 'process.exit(' + this.expression(node.code) + ');';
         // if (!node.code) return 'au3.Exit();';
         // return 'au3.Exit(' + this.expression(node.code) + ');';
     }
 
-    private varDeclaration(node: TypedNode<NodeType.VarDeclaration>) {
+    private varDeclaration(node: AstNode<NodeType.VarDeclaration>) {
         if (node.isStatic) {
             const funcScope = this.scope.findAncestor(BlockType.Func, { includeSelf: true });
             if (!funcScope) {
@@ -212,7 +216,7 @@ export class Transpiler {
         return code + ';';
     }
 
-    private varAssignment(node: TypedNode<NodeType.VarAssignment>) {
+    private varAssignment(node: AstNode<NodeType.VarAssignment>) {
         const variable = this.expression(node.target);
 
         let code = variable;
@@ -319,7 +323,7 @@ export class Transpiler {
         return '{UNKNOWN_EXPR}';
     }
 
-    private blockStatement(node: TypedNode<NodeType.BlockStatement>) {
+    private blockStatement(node: AstNode<NodeType.BlockStatement>) {
         let code = '';
 
         for (const stmt of node.body) {
@@ -329,7 +333,7 @@ export class Transpiler {
         return code;
     }
 
-    private funcDeclaration(node: TypedNode<NodeType.FunctionDeclaration>) {
+    private funcDeclaration(node: AstNode<NodeType.FunctionDeclaration>) {
         const functionName = node.name.toLowerCase() + '_fn';
         let code = '\nfunction ' + functionName + '(';
         code += node.parameters
@@ -340,7 +344,7 @@ export class Transpiler {
         code += '    const static_ = (' + functionName + '.static ??= {});\n';
 
         this.enterScope(BlockType.Func);
-        code += this.blockStatement(node.body as TypedNode<NodeType.BlockStatement>);
+        code += this.blockStatement(node.body);
         this.leaveScope();
 
         code += '}';
@@ -348,23 +352,23 @@ export class Transpiler {
         return code;
     }
 
-    private parameter(node: TypedNode<NodeType.Parameter>) {
+    private parameter(node: AstNode<NodeType.Parameter>) {
         return '$' + node.name.toLowerCase()
             + (node.defaultValue ? ' = ' + this.expression(node.defaultValue) : '');
     }
 
-    private return(node: TypedNode<NodeType.Return>) {
+    private return(node: AstNode<NodeType.Return>) {
         if (!node.value) return 'return;';
         return 'return ' + this.expression(node.value) + ';';
     }
 
-    private whileStatement(node: TypedNode<NodeType.WhileStatement>) {
+    private whileStatement(node: AstNode<NodeType.WhileStatement>) {
         let code = 'while (';
 
         code += this.expression(node.test) + ') {\n';
 
         this.enterScope(BlockType.While);
-        code += this.blockStatement(node.body as TypedNode<NodeType.BlockStatement>);
+        code += this.blockStatement(node.body);
         this.leaveScope();
 
         code += '}';
@@ -372,11 +376,11 @@ export class Transpiler {
         return code;
     }
 
-    private doUntilStatement(node: TypedNode<NodeType.DoUntilStatement>) {
+    private doUntilStatement(node: AstNode<NodeType.DoUntilStatement>) {
         let code = 'do {\n';
 
         this.enterScope(BlockType.Do);
-        code += this.blockStatement(node.body as TypedNode<NodeType.BlockStatement>);
+        code += this.blockStatement(node.body);
         this.leaveScope();
 
         code += '} while (' + this.expression(node.test) + ');';
@@ -384,7 +388,7 @@ export class Transpiler {
         return code;
     }
 
-    private forToStatement(node: TypedNode<NodeType.ForToStatement>) {
+    private forToStatement(node: AstNode<NodeType.ForToStatement>) {
         let code = 'for (';
 
         const variable = '$' + node.variable.toLowerCase();
@@ -403,7 +407,7 @@ export class Transpiler {
         code += `${variable}${step}) {\n`;
 
         this.enterScope(BlockType.For);
-        code += this.blockStatement(node.body as TypedNode<NodeType.BlockStatement>);
+        code += this.blockStatement(node.body);
         this.leaveScope();
 
         code += '}';
@@ -411,7 +415,7 @@ export class Transpiler {
         return code;
     }
 
-    private forInStatement(node: TypedNode<NodeType.ForInStatement>) {
+    private forInStatement(node: AstNode<NodeType.ForInStatement>) {
         let code = 'for (';
 
         const variable = '$' + node.variable.toLowerCase();
@@ -419,7 +423,7 @@ export class Transpiler {
         code += `let ${variable} of ${this.expression(node.array)}) {\n`;
 
         this.enterScope(BlockType.For);
-        code += this.blockStatement(node.body as TypedNode<NodeType.BlockStatement>);
+        code += this.blockStatement(node.body);
         this.leaveScope();
 
         code += '}';
@@ -427,7 +431,7 @@ export class Transpiler {
         return code;
     }
 
-    private exitLoop(node: TypedNode<NodeType.ExitLoop>) {
+    private exitLoop(node: AstNode<NodeType.ExitLoop>) {
         if (!node.levels) {
             return 'break;';
         }
@@ -435,7 +439,7 @@ export class Transpiler {
         // return 'return ' + this.expression(node.value) + ';';
     }
 
-    private ifStatement(node: TypedNode<NodeType.IfStatement>, elseif = false) {
+    private ifStatement(node: AstNode<NodeType.IfStatement>, elseif = false) {
         let code = 'if (';
 
         code += this.expression(node.test) + ') ';
@@ -466,14 +470,14 @@ export class Transpiler {
         return code;
     }
 
-    private switchStatement(node: TypedNode<NodeType.SwitchStatement>) {
+    private switchStatement(node: AstNode<NodeType.SwitchStatement>) {
         let code = '\nswitch (';
 
         code += this.expression(node.target) + ') {\n';
 
         this.enterScope(BlockType.Switch);
         for (const switchCase of node.cases) {
-            code += this.switchCase(switchCase as TypedNode<NodeType.SwitchCase>);
+            code += this.switchCase(switchCase);
         }
         this.leaveScope();
 
@@ -482,12 +486,12 @@ export class Transpiler {
         return code;
     }
 
-    private switchCase(node: TypedNode<NodeType.SwitchCase>) {
+    private switchCase(node: AstNode<NodeType.SwitchCase>) {
         let code = 'case ';
         code += this.expression(node.value) + ':\n';
 
         this.enterScope(BlockType.SwitchCase);
-        code += this.blockStatement(node.body as TypedNode<NodeType.BlockStatement>);
+        code += this.blockStatement(node.body);
         this.leaveScope();
 
         code += '    break;\n';
@@ -495,11 +499,7 @@ export class Transpiler {
         return code;
     }
 
-    private jsDirective(node: TypedNode<NodeType.JsDirective>) {
+    private jsDirective(node: AstNode<NodeType.JsDirective>) {
         return node.code;
-    }
-
-    static transpile(tree: AstNode) {
-        return new Transpiler(tree).run();
     }
 }

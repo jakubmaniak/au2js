@@ -2,10 +2,10 @@ import { NodeType } from './node-type';
 import { VarDeclaration } from './var-declaration';
 
 
-export type TypedNode<T extends NodeType> = { type: T } & AstNode;
+export type AstNode<T extends NodeType = AstNodeMap['type']> = { type: T } & AstNodeMap;
 
 
-export type AstNode =
+export type AstNodeMap =
     {
         type: NodeType.Program,
         children: AstNode[]
@@ -90,8 +90,8 @@ export type AstNode =
     | {
         type: NodeType.FunctionDeclaration,
         name: string,
-        parameters: TypedNode<NodeType.Parameter>[],
-        body: AstNode
+        parameters: AstNode<NodeType.Parameter>[],
+        body: AstNode<NodeType.BlockStatement>
     }
     | {
         type: NodeType.Parameter,
@@ -107,12 +107,12 @@ export type AstNode =
     | {
         type: NodeType.WhileStatement,
         test: AstNode,
-        body: AstNode
+        body: AstNode<NodeType.BlockStatement>
     }
     | {
         type: NodeType.DoUntilStatement,
         test: AstNode,
-        body: AstNode
+        body: AstNode<NodeType.BlockStatement>
     }
     | {
         type: NodeType.ForToStatement,
@@ -120,13 +120,13 @@ export type AstNode =
         start: AstNode,
         stop: AstNode,
         step?: AstNode,
-        body: AstNode
+        body: AstNode<NodeType.BlockStatement>
     }
     | {
         type: NodeType.ForInStatement,
         variable: string,
         array: AstNode,
-        body: AstNode
+        body: AstNode<NodeType.BlockStatement>
     }
     | {
         type: NodeType.ExitLoop,
@@ -137,18 +137,18 @@ export type AstNode =
         oneline: boolean,
         test: AstNode,
         body: AstNode,
-        elseBody?: AstNode
+        elseBody?: AstNode<NodeType.BlockStatement | NodeType.IfStatement>
     }
     | {
         type: NodeType.SwitchStatement,
         target: AstNode,
-        cases: AstNode[]
+        cases: AstNode<NodeType.SwitchCase>[]
     }
     | {
         type: NodeType.SwitchCase,
         value: AstNode,
         toValue?: AstNode,
-        body: AstNode
+        body: AstNode<NodeType.BlockStatement>
     }
     | {
         type: NodeType.JsDirective,
