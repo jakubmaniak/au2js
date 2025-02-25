@@ -24,6 +24,10 @@ body {
     display: block;
     background-color: #101014;
     color-scheme: dark;
+    color: #d0dade;
+    font-family: 'JetBrains Mono';
+    font-size: 14px;
+    font-weight: 500;
 }
 
 #app {
@@ -36,80 +40,75 @@ body {
     height: 100vh;
 }
 
-textarea, #output, #extra-output {
-    padding: 12px 15px;
+.box {
+    display: flex;
+    flex-direction: column;
     background-color: #141418;
     border: 1px solid #202024;
     border-top-color: #242428;
     border-radius: 8px;
     box-shadow: 0 0 6px rgba(0,0,0,0.15),
                 0 1px 6px rgba(255,255,255,0.02) inset;
-    color: #d0dade;
-    font-family: 'JetBrains Mono';
-    font-size: 14px;
-    font-weight: 500;
 }
 
-textarea {
-    grid-area: in;
-    outline: none;
-    resize: none;
-}
-
-#output,
-#extra-output {
-    grid-area: output;
-    white-space: pre-wrap;
-    color: #bed0e2;
-}
-
-#output {
-    overflow: auto;
-}
-
-#extra-output {
-    grid-area: extra;
-    position: relative;
-    display: flex;
-    flex-direction: column;
-    padding: 0;
-    overflow: hidden;
-}
-
-#extra-output .header {
+.box .header {
     display: flex;
     flex-shrink: 0;
+    padding: 9px;
     background-color: rgba(255,255,255,0.01);
     border-bottom: 1px solid rgba(255,255,255,0.025);
     border-radius: 6px 6px 0 0;
 }
 
-button#execute {
-    flex-shrink: 0;
-    margin: auto;
-    margin-right: 9px;
-    width: 32px;
-    height: 32px;
-    background-color: #2d5728;
-    background-image: url('./assets/execute.svg');
-    background-repeat: no-repeat;
-    background-position: center center;
-    border: 1px solid rgba(255,255,255,0.15);
-    border-top-color: rgba(255,255,255,0.2);
-    border-radius: 6px;
-    box-shadow: 0 0 6px rgba(0,0,0,0.15),
-                0 1px 6px rgba(255,255,255,0.1) inset;
-    cursor: pointer;
-    transition: background-color 0.1s;
+.box .header h1 {
+    height: 28px;
+    line-height: 28px;
+    padding-left: 6px;
+    color: #c0c0c4;
+    font-family: 'Inter', sans-serif;
+    font-size: 14px;
+    font-weight: 500;
+    user-select: none;
 }
 
-button#execute:hover {
-    background-color: #31632b;
+.box .content {
+    flex-grow: 1;
+}
+
+#source {
+    grid-area: in;
+}
+
+#source textarea {
+    height: 100%;
+    width: 100%;
+    padding: 12px 15px;
+    background-color: transparent;
+    border: 0;
+    outline: none;
+    resize: none;
+    font: inherit;
+    color: #d0dade;
+}
+
+#output,
+#extra-output {
+    overflow: hidden;
+    white-space: pre-wrap;
+    color: #bed0e2;
+}
+
+#output {
+    grid-area: output;
+}
+
+#extra-output {
+    grid-area: extra;
+    position: relative;
 }
 
 #extra-output .tabs {
     display: flex;
-    padding: 9px;
     width: 100%;
 }
 
@@ -137,6 +136,49 @@ button#execute:hover {
     color: #ffffff;
 }
 
+button#execute {
+    flex-shrink: 0;
+    margin: auto;
+    width: 32px;
+    height: 32px;
+    background-color: #2d5728;
+    background-image: url('./assets/execute.svg');
+    background-repeat: no-repeat;
+    background-position: center center;
+    border: 1px solid rgba(255,255,255,0.15);
+    border-top-color: rgba(255,255,255,0.2);
+    border-radius: 6px;
+    box-shadow: 0 0 6px rgba(0,0,0,0.15),
+                0 1px 6px rgba(255,255,255,0.1) inset;
+    cursor: pointer;
+    transition: background-color 0.1s;
+}
+
+button#execute:hover {
+    background-color: #31632b;
+}
+
+button#copy-code {
+    height: 28px;
+    padding: 0 12px;
+    margin-left: auto;
+    background-color: #2e2e32;
+    border: 1px solid #ffffff2a;
+    border-radius: 6px;
+    box-shadow: 0 1px 6px rgba(255,255,255,0.075) inset;
+    color: #f0f0f0;
+    font-family: 'Inter', sans-serif;
+    font-size: 13px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: border-color 0.1s;
+}
+
+button#copy-code:hover {
+    border-color: #ffffff3a;
+}
+
+#output .content,
 #extra-output .content {
     flex-grow: 1;
     padding: 12px 15px;

@@ -8,7 +8,6 @@ import { Lexer } from './lib/lexer';
 import { Parser } from './lib/parser';
 import { Transpiler } from './lib/transpiler';
 import { Token } from './lib/types/token';
-import './style.css';
 
 
 hljs.configure({ classPrefix: 'token--' });
@@ -26,9 +25,11 @@ const state = {
 };
 
 
-const textarea = document.querySelector('textarea')!;
-const output = document.querySelector('div#output')!;
-const extraOutput = document.querySelector('#extra-output div.content')!;
+const textarea = document.querySelector<HTMLTextAreaElement>('#source textarea')!;
+const output = document.querySelector('#output .content')!;
+const extraOutput = document.querySelector('#extra-output .content')!;
+const executeButton = document.querySelector('button#execute')!;
+const copyButton = document.querySelector<HTMLButtonElement>('button#copy-code')!;
 
 document.querySelectorAll('#extra-output .tabs button')
     .forEach((tab) => {
@@ -50,8 +51,8 @@ addEventListener('keyup', (ev) => {
     }
 });
 
-document.querySelector('button#execute')!.addEventListener('click', executeCode);
-
+executeButton.addEventListener('click', executeCode);
+copyButton.addEventListener('click', copyCode);
 
 function changeTab(tabId: string) {
     state.currentTab = tabId;
@@ -157,4 +158,13 @@ function executeCode() {
     });
 
     changeTab('console');
+}
+
+async function copyCode() {
+    await navigator.clipboard.writeText(state.code);
+    copyButton.innerText = 'Copied';
+
+    setTimeout(() => {
+        copyButton.innerText = 'Copy';
+    }, 1500);
 }
