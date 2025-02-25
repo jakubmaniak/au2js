@@ -12,7 +12,7 @@ const macros = new Set([
 const builtin = new Set([
     'Abs', 'ACos', 'Asc', 'AscW', 'ASin', 'ATan', 'AdlibRegister', 'AdlibUnregister', 'Asc', 'AscW', 'AutoItSetOption',
     'Binary', 'BinaryToString', 'BitAND', 'BitNOT', 'BitOR', 'BitRotate', 'BitShift', 'BitXOR',
-    'Ceiling', 'Chr', 'ChrW', 'ConsoleRead', 'ConsoleWrite', 'Cos',
+    'Ceiling', 'Chr', 'ChrW', 'ClipGet', 'ClipPut', 'ConsoleRead', 'ConsoleWrite', 'Cos',
     'Dec', 'DllCall', 'DllClose', 'DllOpen',
     'Exp',
     'Floor', 'FuncName',
@@ -36,15 +36,16 @@ const builtin = new Set([
     'StringReplace', 'StringReverse', 'StringRight', 'StringSplit', 'StringToBinary',
     'StringTrimLeft', 'StringTrimRight', 'StringUpper',
     'Sqrt',
-    'Tan', 'TimerInit', 'TimerDiff',
+    'Tan', 'TimerInit', 'TimerDiff', 'ToolTip',
     'UBound',
-    'VarGetType'
+    'VarGetType',
+    'WinClose', 'WinExists', 'WinWaitActive'
 ]);
 const builtinMap = new Map([...builtin].map((kwd) => [kwd.toLowerCase(), kwd]));
 const usedBuiltins = new Set<string>();
 
 export class Transpiler {
-    private lines: string[] = ['const au3 = require("au3");'];
+    private segments: string[] = ['const au3 = require("au3");'];
     private scope = new Scope(BlockType.Program);
 
     private constructor(private tree: AstNode<NodeType.Program>) { }
@@ -58,19 +59,19 @@ export class Transpiler {
 
         let i = 0;
         for (const stmt of this.tree.children) {
-            this.lines.push(this.statement(stmt));
+            this.segments.push(this.statement(stmt));
 
             if (i > 0
                 && this.tree.children[i - 1].type == NodeType.FunctionDeclaration
                 && stmt.type != NodeType.FunctionDeclaration
             ) {
-                this.lines[this.lines.length - 1] = '\n' + this.lines[this.lines.length - 1];
+                this.segments[this.segments.length - 1] = '\n' + this.segments[this.segments.length - 1];
             }
 
             i++;
         }
 
-        return this.lines.join('\n');
+        return this.segments.join('\n');
     }
 
     private enterScope(type: BlockType) {
@@ -104,67 +105,70 @@ export class Transpiler {
     }
 
     private statement(stmt: AstNode, { inline = false } = { }) {
-        let line = '';
+        let code = '';
 
         if (stmt.type == NodeType.ExpressionStatement) {
-            line = this.expression(stmt.expression) + ';';
+            code = this.expression(stmt.expression) + ';';
         }
         else if (stmt.type == NodeType.Exit) {
-            line = this.exit(stmt);
+            code = this.exit(stmt);
         }
         else if (stmt.type == NodeType.VarDeclaration) {
-            line = this.varDeclaration(stmt);
+            code = this.varDeclaration(stmt);
         }
         else if (stmt.type == NodeType.VarAssignment) {
-            line = this.varAssignment(stmt);
+            code = this.varAssignment(stmt);
         }
         else if (stmt.type == NodeType.FunctionDeclaration) {
-            line = this.funcDeclaration(stmt);
+            code = this.funcDeclaration(stmt);
         }
         else if (stmt.type == NodeType.Return) {
-            line = this.return(stmt);
+            code = this.return(stmt);
         }
         else if (stmt.type == NodeType.WhileStatement) {
-            line = this.whileStatement(stmt);
+            code = this.whileStatement(stmt);
         }
         else if (stmt.type == NodeType.DoUntilStatement) {
-            line = this.doUntilStatement(stmt);
+            code = this.doUntilStatement(stmt);
         }
         else if (stmt.type == NodeType.ForToStatement) {
-            line = this.forToStatement(stmt);
+            code = this.forToStatement(stmt);
         }
         else if (stmt.type == NodeType.ForInStatement) {
-            line = this.forInStatement(stmt);
+            code = this.forInStatement(stmt);
         }
         else if (stmt.type == NodeType.ExitLoop) {
-            line = this.exitLoop(stmt);
+            code = this.exitLoop(stmt);
+        }
+        else if (stmt.type == NodeType.ContinueLoop) {
+            code = this.continueLoop(stmt);
         }
         else if (stmt.type == NodeType.IfStatement) {
-            line = this.ifStatement(stmt);
+            code = this.ifStatement(stmt);
         }
         else if (stmt.type == NodeType.SwitchStatement) {
-            line = this.switchStatement(stmt);
+            code = this.switchStatement(stmt);
         }
         else if (stmt.type == NodeType.JsDirective) {
-            line = this.jsDirective(stmt);
+            code = this.jsDirective(stmt);
         }
 
         if (this.scope.level == 0 || inline) {
-            return line;
+            return code;
         }
-        return this.indent(line);
+        return this.indent(code);
     }
 
     private exit(node: AstNode<NodeType.Exit>) {
-        if (!node.code) return 'process.exit();';
-        return 'process.exit(' + this.expression(node.code) + ');';
+        if (!node.exitCode) return 'process.exit();';
+        return 'process.exit(' + this.expression(node.exitCode) + ');';
         // if (!node.code) return 'au3.Exit();';
         // return 'au3.Exit(' + this.expression(node.code) + ');';
     }
 
     private varDeclaration(node: AstNode<NodeType.VarDeclaration>) {
         if (node.isStatic) {
-            const funcScope = this.scope.findAncestor(BlockType.Func, { includeSelf: true });
+            const funcScope = this.scope.ofType(BlockType.Func);
             if (!funcScope) {
                 throw new Error('Cannot declare a static variable outside a function');
             }
@@ -247,7 +251,7 @@ export class Transpiler {
             else return name + '_fn';
         }
         else if (node.type == NodeType.VarReference) {
-            const funcScope = this.scope.findAncestor(BlockType.Func, { includeSelf: true });
+            const funcScope = this.scope.ofType(BlockType.Func);
             if (funcScope && funcScope.statics.has(node.name)) {
                 return 'static_.$' + node.name.toLowerCase();
             }
@@ -372,7 +376,12 @@ export class Transpiler {
 
         this.enterScope(BlockType.While);
         code += this.blockStatement(node.body);
+
+        if (this.scope.requiresLabel) {
+            code = this.scope.id + ':\n' + code;
+        }
         this.leaveScope();
+
 
         code += '}';
 
@@ -384,6 +393,10 @@ export class Transpiler {
 
         this.enterScope(BlockType.Do);
         code += this.blockStatement(node.body);
+
+        if (this.scope.requiresLabel) {
+            code = this.scope.id + ':\n' + code;
+        }
         this.leaveScope();
 
         code += '} while (' + this.expression(node.test) + ');';
@@ -411,6 +424,10 @@ export class Transpiler {
 
         this.enterScope(BlockType.For);
         code += this.blockStatement(node.body);
+
+        if (this.scope.requiresLabel) {
+            code = this.scope.id + ':\n' + code;
+        }
         this.leaveScope();
 
         code += '}';
@@ -427,6 +444,10 @@ export class Transpiler {
 
         this.enterScope(BlockType.For);
         code += this.blockStatement(node.body);
+
+        if (this.scope.requiresLabel) {
+            code = this.scope.id + ':\n' + code;
+        }
         this.leaveScope();
 
         code += '}';
@@ -435,11 +456,45 @@ export class Transpiler {
     }
 
     private exitLoop(node: AstNode<NodeType.ExitLoop>) {
-        if (!node.levels) {
-            return 'break;';
+        if (node.levels) {
+            throw new Error('ExitLoop <level> is not supported');
         }
-        throw new Error('Not implemented');
-        // return 'return ' + this.expression(node.value) + ';';
+
+        const loopScope = this.scope.ofType([BlockType.While, BlockType.Do, BlockType.For]);
+        const caseScope = this.scope.ofType([BlockType.SwitchCase, BlockType.SelectCase]);
+
+        if (!loopScope) {
+            throw new SyntaxError('Illegal break statement');
+        }
+
+        if (!caseScope || loopScope.level > caseScope.level) {
+            return `break;`;
+        }
+        else {
+            loopScope.requiresLabel = true;
+            return `break ${loopScope.id};`;
+        }
+    }
+
+    private continueLoop(node: AstNode<NodeType.ContinueLoop>) {
+        if (node.levels) {
+            throw new Error('ContinueLoop <level> is not supported');
+        }
+
+        const loopScope = this.scope.ofType([BlockType.While, BlockType.Do, BlockType.For]);
+        const caseScope = this.scope.ofType([BlockType.SwitchCase, BlockType.SelectCase]);
+
+        if (!loopScope) {
+            throw new SyntaxError('Illegal continue statement');
+        }
+
+        if (!caseScope || loopScope.level > caseScope.level) {
+            return `continue;`;
+        }
+        else {
+            loopScope.requiresLabel = true;
+            return `continue ${loopScope.id};`;
+        }
     }
 
     private ifStatement(node: AstNode<NodeType.IfStatement>, elseif = false) {
@@ -474,7 +529,7 @@ export class Transpiler {
     }
 
     private switchStatement(node: AstNode<NodeType.SwitchStatement>) {
-        let code = '\nswitch (';
+        let code = 'switch (';
 
         code += this.expression(node.target) + ') {\n';
 
@@ -491,13 +546,13 @@ export class Transpiler {
 
     private switchCase(node: AstNode<NodeType.SwitchCase>) {
         let code = 'case ';
-        code += this.expression(node.value) + ':\n';
+        code += this.expression(node.value) + ': {\n';
 
         this.enterScope(BlockType.SwitchCase);
         code += this.blockStatement(node.body);
         this.leaveScope();
 
-        code += '    break;\n';
+        code += '    break;\n}';
 
         return code;
     }

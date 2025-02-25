@@ -4,6 +4,7 @@ import yml from 'highlight.js/lib/languages/yaml';
 import JSON5 from 'json5';
 import YAML from 'yaml';
 import { Evaluator } from './lib/evaluator';
+import { sanitize } from './lib/helpers/sanitize';
 import { Lexer } from './lib/lexer';
 import { Parser } from './lib/parser';
 import { Transpiler } from './lib/transpiler';
@@ -102,7 +103,7 @@ function onInput() {
         state.error = result.error;
         state.tokens = result.tokens;
 
-        extraOutput.innerHTML = result.error;
+        extraOutput.innerHTML = sanitize(result.error);
         extraOutput.classList.add('error');
         return;
     }

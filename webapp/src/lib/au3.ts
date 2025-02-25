@@ -111,6 +111,8 @@ const functions = {
         if (+code < 0 || +code > 65535) return '';
         return String.fromCharCode(+code);
     },
+    ClipGet() { },
+    ClipPut(text: string) { },
     ConsoleWrite(data: any) { console.log(data); },
     Cos(number: AuNumber) { return Math.cos(+number); },
     // Exit(number: AuNumber = 0) {
@@ -119,9 +121,16 @@ const functions = {
     Exp(number: AuNumber) { return Math.exp(+number); },
     Floor(number: AuNumber) { return Math.floor(+number); },
     FuncName(func: Function) { return func.name; },
+    HotKeySet(keys: AuString, func: AuString | Function) { },
     Include(_path: string) {  },
     Log(number: AuNumber) { return Math.log(+number); },
     Mod(a: AuNumber, b: AuNumber) { return +a % +b; },
+    MouseClick() { },
+    MouseDown() { },
+    MouseGetCursor() { },
+    MouseGetPos() { },
+    MouseMove() { },
+    MouseUp() { },
     MsgBox(_flag: number, _title: string, content: string) {
         alert(content);
         return 1;
@@ -141,6 +150,8 @@ const functions = {
             return Math.round((number as number) * 10 ** +decim) / 10 ** +decim;
         return +(+number).toFixed(+decim);
     },
+    Run(command: AuString) { },
+    Send(keys: AuString) { },
     SetError(code: AuNumber, extended: AuNumber = 0, returnValue: any = 1) {
         macros._var.error = +code;
         macros._var.extended = +extended;
@@ -162,6 +173,21 @@ const functions = {
         // if (typeof value == 'boolean')
         //     return value ? 'True' : 'False';
         return value?.toString() ?? '';
+    },
+    StringInStr(
+        string: AuString,
+        substring: AuString,
+        casesense: AuNumber = 0,
+        occurence: AuNumber = 1, 
+        start: AuNumber = 1,
+        count: AuNumber = -1
+    ) {
+        if (+count != -1) {
+            return String(string)
+                .slice(0, +count)
+                .indexOf(substring.toString(), +start - 1) + 1;
+        }
+        return String(string).indexOf(substring.toString(), +start - 1) + 1;
     },
     StringLeft(string: AuString, count: AuNumber) {
         return string.toString().slice(0, +count);
@@ -194,6 +220,7 @@ const functions = {
     Sqrt(number: AuNumber) {
         return Math.sqrt(+number);
     },
+    ToolTip() { },
     UBound(array: any[], dim = 1): number {
         if (dim > 1 && array.length)
             return this.UBound(array[0], dim - 1);
@@ -216,7 +243,10 @@ const functions = {
             return Object.values(functions).includes(variable) ? 'Function' : 'UserFunction';
 
         return 'Object';
-    }
+    },
+    WinClose() { },
+    WinExists() { },
+    WinWaitActive() { },
 };
 
 

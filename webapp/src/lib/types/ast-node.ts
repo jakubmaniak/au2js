@@ -81,7 +81,7 @@ export type AstNodeMap =
     }
     | {
         type: NodeType.Exit,
-        code?: AstNode
+        exitCode?: AstNode
     }
     | {
         type: NodeType.BlockStatement,
@@ -130,6 +130,10 @@ export type AstNodeMap =
     }
     | {
         type: NodeType.ExitLoop,
+        levels?: AstNode
+    }
+    | {
+        type: NodeType.ContinueLoop,
         levels?: AstNode
     }
     | {

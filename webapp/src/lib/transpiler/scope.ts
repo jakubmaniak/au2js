@@ -3,13 +3,16 @@ import { BlockType } from '../types/block-type';
 
 
 export class Scope {
-    id = uid();
+    id: string;
     level = 0;
     parent?: Scope;
     children = new Set<Scope>();
     statics = new Set<string>();
+    requiresLabel = false;
 
-    constructor(public type: BlockType) { }
+    constructor(public type: BlockType) {
+        this.id = type.toLowerCase() + '_' + uid();
+    }
 
     enter(scope: Scope) {
         scope.level = this.level + 1;
@@ -23,7 +26,7 @@ export class Scope {
         this.parent = undefined;
     }
 
-    hasAncestor(type: BlockType, { includeSelf = false } = { }) {
+    hasAncestor(type: BlockType, { includeSelf = true } = { }) {
         if (includeSelf && this.type == type) return true;
 
         let scope: Scope = this;
@@ -35,12 +38,18 @@ export class Scope {
         return false;
     }
 
-    findAncestor(type: BlockType, { includeSelf = false } = { }) {
-        if (includeSelf && this.type == type) return this;
+    ofType(type: BlockType | BlockType[], { includeSelf = true } = { }) {
+        const types = Array.isArray(type) ? type : [type];
+
+        if (includeSelf && types.includes(this.type)) {
+            return this;
+        }
 
         let scope: Scope = this;
         while (scope.parent) {
-            if (scope.parent.type == type) return scope.parent;
+            if (types.includes(scope.parent.type)) {
+                return scope.parent;
+            }
             scope = scope.parent;
         }
     }

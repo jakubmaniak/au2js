@@ -203,7 +203,7 @@ export class Parser {
 
             return {
                 type: NodeType.Exit,
-                code
+                exitCode: code
             } as AstNode;
         }
         // WhileStatement
@@ -449,6 +449,18 @@ export class Parser {
 
             return {
                 type: NodeType.ExitLoop,
+                levels
+            } as AstNode;
+        }
+        // ContinueLoop
+        else if (this.eat(TokenType.Keyword, 'ContinueLoop')) {
+            const levels = this.eatExpression() ?? undefined;
+
+            this.match(TokenType.EOL)
+                || this.expected(TokenType.EOL);
+
+            return {
+                type: NodeType.ContinueLoop,
                 levels
             } as AstNode;
         }

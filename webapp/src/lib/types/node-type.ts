@@ -27,5 +27,6 @@ export enum NodeType {
     SwitchStatement = 'SwitchStatement',
     SwitchCase = 'SwitchCase',
     ExitLoop = 'ExitLoop',
+    ContinueLoop = 'ContinueLoop',
     JsDirective = 'JsDirective'
 }
