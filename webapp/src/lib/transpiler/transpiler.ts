@@ -103,10 +103,6 @@ export class Transpiler {
             .join('\n');
     }
 
-    private levelIndent() {
-        return new Array(this.scope.level).fill('    ').join('');
-    }
-
     private statement(stmt: AstNode, { inline = false } = { }) {
         let line = '';
 
@@ -218,9 +214,16 @@ export class Transpiler {
 
     private varAssignment(node: AstNode<NodeType.VarAssignment>) {
         const variable = this.expression(node.target);
+        let operator: string = node.kind;
 
-        let code = variable;
-        code += ' ' + node.kind + ' ';
+        if (operator == '&=') {
+            operator = "+= ''+";
+        }
+        else if (operator == '+=') {
+            operator = '= +(' + variable + ') +';
+        }
+
+        let code = variable + ' ' + operator + ' ';
         code += this.expression(node.value);
 
         return code + ';';

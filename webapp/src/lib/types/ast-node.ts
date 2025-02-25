@@ -37,7 +37,7 @@ export type AstNodeMap =
     | {
         type: NodeType.VarAssignment,
         target: AstNode,
-        kind: '+' | '+=' | '-=' | '*=' | '/=' | '&=',
+        kind: '=' | '+=' | '-=' | '*=' | '/=' | '&=',
         subscripts?: AstNode[],
         value: AstNode
     }
