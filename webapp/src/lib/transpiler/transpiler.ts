@@ -45,7 +45,7 @@ const builtinMap = new Map([...builtin].map((kwd) => [kwd.toLowerCase(), kwd]));
 const usedBuiltins = new Set<string>();
 
 export class Transpiler {
-    private segments: string[] = ['const au3 = require("au3");'];
+    private segments: string[] = ['const au3 = require("au3");\n'];
     private scope = new Scope(BlockType.Program);
 
     private constructor(private tree: AstNode<NodeType.Program>) { }
@@ -80,6 +80,8 @@ export class Transpiler {
 
         outer.enter(inner);
         this.scope = inner;
+
+        return inner;
 
         // console.log(outer.level + ' -> ' + this.scope.level);
     }
@@ -342,21 +344,26 @@ export class Transpiler {
 
     private funcDeclaration(node: AstNode<NodeType.FunctionDeclaration>) {
         const functionName = node.name.toLowerCase() + '_fn';
-        let code = '\nfunction ' + functionName + '(';
-        code += node.parameters
+
+        let header = '\nfunction ' + functionName + '(';
+        header += node.parameters
             .map((p) => this.parameter(p))
             .join(', ');
+        header += ') {\n';
 
-        code += ') {\n';
-        code += '    const static_ = (' + functionName + '.static ??= {});\n';
+        let code = '';
 
-        this.enterScope(BlockType.Func);
+        const scope = this.enterScope(BlockType.Func);
         code += this.blockStatement(node.body);
+
+        if (scope.statics.size > 0) {
+            header += '    const static_ = (' + functionName + '.static ??= {});\n';
+        }
         this.leaveScope();
 
         code += '}';
 
-        return code;
+        return header + code;
     }
 
     private parameter(node: AstNode<NodeType.Parameter>) {
@@ -374,11 +381,11 @@ export class Transpiler {
 
         code += this.expression(node.test) + ') {\n';
 
-        this.enterScope(BlockType.While);
+        const scope = this.enterScope(BlockType.While);
         code += this.blockStatement(node.body);
 
-        if (this.scope.requiresLabel) {
-            code = this.scope.id + ':\n' + code;
+        if (scope.requiresLabel) {
+            code = scope.id + ':\n' + code;
         }
         this.leaveScope();
 
@@ -391,11 +398,11 @@ export class Transpiler {
     private doUntilStatement(node: AstNode<NodeType.DoUntilStatement>) {
         let code = 'do {\n';
 
-        this.enterScope(BlockType.Do);
+        const scope = this.enterScope(BlockType.Do);
         code += this.blockStatement(node.body);
 
-        if (this.scope.requiresLabel) {
-            code = this.scope.id + ':\n' + code;
+        if (scope.requiresLabel) {
+            code = scope.id + ':\n' + code;
         }
         this.leaveScope();
 
@@ -422,11 +429,11 @@ export class Transpiler {
         code += `${condition}; `;
         code += `${variable}${step}) {\n`;
 
-        this.enterScope(BlockType.For);
+        const scope = this.enterScope(BlockType.For);
         code += this.blockStatement(node.body);
 
-        if (this.scope.requiresLabel) {
-            code = this.scope.id + ':\n' + code;
+        if (scope.requiresLabel) {
+            code = scope.id + ':\n' + code;
         }
         this.leaveScope();
 
@@ -442,11 +449,11 @@ export class Transpiler {
 
         code += `let ${variable} of ${this.expression(node.array)}) {\n`;
 
-        this.enterScope(BlockType.For);
+        const scope = this.enterScope(BlockType.For);
         code += this.blockStatement(node.body);
 
-        if (this.scope.requiresLabel) {
-            code = this.scope.id + ':\n' + code;
+        if (scope.requiresLabel) {
+            code = scope.id + ':\n' + code;
         }
         this.leaveScope();
 
