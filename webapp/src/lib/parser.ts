@@ -140,19 +140,19 @@ export class Parser {
     }
 
     private eatStatement(blockType: BlockType, { oneline = false } = { }): AstNode | null {
-        if (this.match(TokenType.EOL)) {
-            return null;
-        }
+        let node: AstNode | null = null;
+        const startingToken = this.tok;
 
+        if (this.match(TokenType.EOL)) {
+            node = null;
+        }
         // VarDeclaration
-        if (this.match(TokenType.Keyword, ['Local', 'Global', 'Dim', 'Static', 'Const'])) {
-            const node = this.eatVarDeclaration();
-            if (node) return node;
+        else if (this.match(TokenType.Keyword, ['Local', 'Global', 'Dim', 'Static', 'Const'])) {
+            node = this.eatVarDeclaration();
         }
         // VarAssignment or [var]FunctionCall
         else if (this.match(TokenType.Variable)) {
-            const node = this.eatMaybeVarAssignment();
-            if (node) return node;
+            node = this.eatMaybeVarAssignment();
         }
         // FunctionDeclaration
         else if (!oneline && this.match(TokenType.Keyword, 'Func')) {
@@ -179,32 +179,30 @@ export class Parser {
             this.eat(TokenType.EOL)
                 || expected(TokenType.EOL);
 
-            const node: AstNode<NodeType.FunctionDeclaration> = {
+            node = {
                 type: NodeType.FunctionDeclaration,
                 name: name.value,
                 parameters: params,
                 body
             };
-
-            return node;
         }
         // Return
         else if (this.eat(TokenType.Keyword, 'Return')) {
             const value = this.eatExpression() ?? undefined;
 
-            return {
+            node = {
                 type: NodeType.Return,
                 value
-            } as AstNode;
+            };
         }
         // Exit
         else if (this.eat(TokenType.Keyword, 'Exit')) {
             const code = this.eatExpression() ?? undefined;
 
-            return {
+            node = {
                 type: NodeType.Exit,
                 exitCode: code
-            } as AstNode;
+            };
         }
         // WhileStatement
         else if (!oneline && this.eat(TokenType.Keyword, 'While')) {
@@ -220,13 +218,11 @@ export class Parser {
 
             this.eat(TokenType.Keyword);
 
-            const node: AstNode = {
+            node = {
                 type: NodeType.WhileStatement,
                 test,
                 body
             };
-
-            return node;
         }
         // DoUntilStatement
         else if (!oneline && this.eat(TokenType.Keyword, 'Do')) {
@@ -245,13 +241,11 @@ export class Parser {
             this.match(TokenType.EOL)
                 || expected(TokenType.EOL);
 
-            const node: AstNode = {
+            node = {
                 type: NodeType.DoUntilStatement,
                 test,
                 body
             };
-
-            return node;
         }
         // ForToStatement / ForInStatement
         else if (!oneline && this.eat(TokenType.Keyword, 'For')) {
@@ -259,8 +253,6 @@ export class Parser {
 
             const variable = this.eat(TokenType.Variable)
                 || expected('variable');
-
-            let node: AstNode;
 
             if (this.eat(TokenType.Keyword, 'In')) {
                 const array = this.eatExpression()
@@ -309,8 +301,6 @@ export class Parser {
             node.body = this.eatBlock(BlockType.For);
 
             this.eat(TokenType.Keyword);
-
-            return node;
         }
         // IfStatement
         else if (!oneline && this.eat(TokenType.Keyword, 'If')) {
@@ -343,7 +333,7 @@ export class Parser {
             }
 
 
-            const node: AstNode = {
+            node = {
                 type: NodeType.IfStatement,
                 oneline,
                 test,
@@ -393,10 +383,7 @@ export class Parser {
 
                     current = current.elseBody;
                 }
-
             }
-
-            return node;
         }
         // SwitchStatement
         else if (!oneline && this.eat(TokenType.Keyword, 'Switch')) {
@@ -432,13 +419,11 @@ export class Parser {
             this.eat(TokenType.Keyword)
                 || expected('closing keyword');
 
-            const node: AstNode = {
+            node = {
                 type: NodeType.SwitchStatement,
                 target,
                 cases
             };
-
-            return node;
         }
         // ExitLoop
         else if (this.eat(TokenType.Keyword, 'ExitLoop')) {
@@ -447,10 +432,10 @@ export class Parser {
             this.match(TokenType.EOL)
                 || this.expected(TokenType.EOL);
 
-            return {
+            node = {
                 type: NodeType.ExitLoop,
                 levels
-            } as AstNode;
+            };
         }
         // ContinueLoop
         else if (this.eat(TokenType.Keyword, 'ContinueLoop')) {
@@ -459,10 +444,10 @@ export class Parser {
             this.match(TokenType.EOL)
                 || this.expected(TokenType.EOL);
 
-            return {
+            node = {
                 type: NodeType.ContinueLoop,
                 levels
-            } as AstNode;
+            };
         }
         // Directive
         else if (!oneline && this.match(TokenType.Directive)) {
@@ -471,13 +456,13 @@ export class Parser {
             const name = directive.value!.split(' ', 1)[0].toLowerCase();
 
             if (name == 'js') {
-                return {
+                node = {
                     type: NodeType.JsDirective,
                     code: directive.value!.slice(2).trim()
                 };
             }
             else if (name == 'include') {
-                return {
+                node = {
                     type: NodeType.ExpressionStatement,
                     expression: {
                         type: NodeType.FunctionCall,
@@ -496,18 +481,21 @@ export class Parser {
         // ExpressionStatement
         else {
             const expression = this.eatExpression();
-
             if (expression) {
-                const node: AstNode<NodeType.ExpressionStatement> = {
+                node = {
                     type: NodeType.ExpressionStatement,
                     expression
                 };
-
-                return node;
             }
         }
 
-        return null;
+        if (node) {
+            node.source = {
+                precedingBlankLines: startingToken.source?.precedingBlankLines ?? 0
+            };
+        }
+
+        return node;
     }
 
     private eatExpression({ leftHand = false } = { }): AstNode | null {
@@ -772,6 +760,6 @@ export class Parser {
     }
 
     private append(node: AstNode) {
-        (this.tree.type == NodeType.Program) && this.tree.children.push(node);
+        this.tree.children.push(node);
     }
 }
