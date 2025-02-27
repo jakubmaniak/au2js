@@ -1,19 +1,18 @@
 <p align="center">
     <img src="webapp/public/favicon.png">
 </p>
-<h1 align="center">Au2Js – AutoIt3 to JavaScript Converter</h1>
+<h1 align="center">Au2Js – AutoIt3 to JavaScript Transpiler</h1>
 
 <p align="center">
-This project is a converter that translates AutoIt3 code into JavaScript.
-It is built using TypeScript and Vite.<br>
-The primary objective is to achieve the highest possible compatibility with AutoIt3, ensuring accurate and reliable code conversion.
+This project is a tool that translates AutoIt3 code into JavaScript.<br>
+Beyond ordinary translation, the project aims to become a superset of AutoIt3 by leveraging the capabilities of Node.js and JavaScript. This allows for extended functionality while maintaining a high level of support for AutoIt3 syntax and features.
 </p>
 
 ## Features
 - Converts AutoIt3 scripts to JavaScript in real-time
 - Built with TypeScript for type safety
 - Uses Vite for rapid development
-- Provides lexer and parser output preview
+- Provides an AST and a lexer output preview
 
 ## Requirements
 - Node.js version: 20.x or later
