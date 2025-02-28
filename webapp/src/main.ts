@@ -130,11 +130,21 @@ function updateExtraOutput() {
         }
         case 'tokens': {
             const tokens = state.tokens
-                .map((token) => (token.value !== undefined)
-                    ? `${token.type.padEnd(10, ' ')} ${JSON5.stringify(token.value)}`
-                    : token.type
-                )
+                .map((token) => {
+                    const position = (
+                        token.source
+                        ? (token.source.line + ':' + token.source.column)
+                        : ''
+                    );
+                    const type = (
+                        (token.value !== undefined)
+                        ? `${token.type.padEnd(10, ' ')} ${JSON5.stringify(token.value)}`
+                        : token.type
+                    );
+                    return position.padEnd(5, ' ') + ' ' + type;
+                })
                 .join('\n');
+
             const hl = hljs.highlight(tokens, { language: 'javascript', ignoreIllegals: true });
             html = hl.value;
             break;

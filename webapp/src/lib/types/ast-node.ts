@@ -2,8 +2,14 @@ import { NodeType } from './node-type';
 import { VarDeclaration } from './var-declaration';
 
 
-export type AstNode<T extends NodeType = AstNodeMap['type']> = { type: T } & AstNodeMap;
+export type AstNode<T extends NodeType = AstNodeMap['type']> = AstNodeBase<T> & AstNodeMap;
 
+type AstNodeBase<T extends NodeType> = {
+    type: T,
+    source?: {
+        precedingBlankLines: number;
+    }
+};
 
 export type AstNodeMap =
     {

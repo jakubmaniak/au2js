@@ -57,18 +57,8 @@ export class Transpiler {
     private run(): string {
         if (this.tree.type != NodeType.Program) return '';
 
-        let i = 0;
         for (const stmt of this.tree.children) {
             this.segments.push(this.statement(stmt));
-
-            if (i > 0
-                && this.tree.children[i - 1].type == NodeType.FunctionDeclaration
-                && stmt.type != NodeType.FunctionDeclaration
-            ) {
-                this.segments[this.segments.length - 1] = '\n' + this.segments[this.segments.length - 1];
-            }
-
-            i++;
         }
 
         return this.segments.join('\n');
@@ -153,6 +143,12 @@ export class Transpiler {
         }
         else if (stmt.type == NodeType.JsDirective) {
             code = this.jsDirective(stmt);
+        }
+
+        if (stmt.source?.precedingBlankLines) {
+            for (let i = 0; i < stmt.source.precedingBlankLines; i++) {
+                code = '\n' + code;
+            }
         }
 
         if (this.scope.level == 0 || inline) {
@@ -345,7 +341,7 @@ export class Transpiler {
     private funcDeclaration(node: AstNode<NodeType.FunctionDeclaration>) {
         const functionName = node.name.toLowerCase() + '_fn';
 
-        let header = '\nfunction ' + functionName + '(';
+        let header = 'function ' + functionName + '(';
         header += node.parameters
             .map((p) => this.parameter(p))
             .join(', ');
@@ -538,11 +534,11 @@ export class Transpiler {
     private switchStatement(node: AstNode<NodeType.SwitchStatement>) {
         let code = 'switch (';
 
-        code += this.expression(node.target) + ') {\n';
+        code += this.expression(node.target) + ') {';
 
         this.enterScope(BlockType.Switch);
         for (const switchCase of node.cases) {
-            code += this.switchCase(switchCase);
+            code += this.indent(this.switchCase(switchCase));
         }
         this.leaveScope();
 
@@ -552,7 +548,7 @@ export class Transpiler {
     }
 
     private switchCase(node: AstNode<NodeType.SwitchCase>) {
-        let code = 'case ';
+        let code = '\ncase ';
         code += this.expression(node.value) + ': {\n';
 
         this.enterScope(BlockType.SwitchCase);
