@@ -58,7 +58,7 @@ export class Lexer {
             }
             else if (this.ch == ';') {
                 this.advance(1);
-                this.eat(/[^\r\n]*/);
+                this.eat(/^[^\r\n]*/);
             }
             else if (this.ch == '=') {
                 this.advance(1);
@@ -144,12 +144,14 @@ export class Lexer {
             }
             else if (this.ch == '#') {
                 this.advance(1);
-                const value = this.eat(/.+/m);
+                const value = this.eat(/^.+/);
 
                 if (value != null) {
-                    //TODO: improve condition
                     if (value.startsWith('cs') || value.startsWith('comments-start')) {
-                        this.eat(/.*?#(?:ce|comments-end)/s);
+                        this.eat(/.*/s);
+                        while (this.eat(/.*?#(?:ce|comments-end).*/s) === null) {
+                            this.eat(/.*/s);
+                        }
                     }
                     else {
                         this.push({ type: TokenType.Directive, value });
@@ -159,7 +161,7 @@ export class Lexer {
             }
             else if (this.ch == '$') {
                 this.advance(1);
-                const value = this.eat(/[0-9a-zA-Z_]+/);
+                const value = this.eat(/^[0-9a-zA-Z_]+/);
 
                 if (value != null) {
                     this.push({ type: TokenType.Variable, value });
@@ -168,7 +170,7 @@ export class Lexer {
             }
             else if (this.ch == '@') {
                 this.advance(1);
-                const value = this.eat(/[0-9a-zA-Z_]+/);
+                const value = this.eat(/^[0-9a-zA-Z_]+/);
 
                 if (value != null) {
                     this.push({ type: TokenType.Macro, value });
@@ -176,7 +178,7 @@ export class Lexer {
                 else this.error('Unexpected end of input while parsing a macro');
             }
             else if (this.ch == '"') {
-                const value = this.eat(/"(?:[^"]|"")*"/);
+                const value = this.eat(/^"(?:[^"]|"")*"/);
 
                 if (value != null) {
                     this.push({ type: TokenType.String, value });
@@ -184,7 +186,7 @@ export class Lexer {
                 else this.error('Unexpected end of input while parsing a string');
             }
             else if (this.ch == '\'') {
-                const value = this.eat(/'(?:[^']|'')*'/);
+                const value = this.eat(/^'(?:[^']|'')*'/);
 
                 if (value != null) {
                     this.push({ type: TokenType.String, value });
@@ -192,7 +194,7 @@ export class Lexer {
                 else this.error('Unexpected end of input while parsing a string');
             }
             else if (this.ch.match(/[0-9]/)) {
-                const value = this.eat(/(0x[0-9a-f]+|\d+(\.\d+)?)/i);
+                const value = this.eat(/^(0x[0-9a-f]+|\d+(\.\d+)?)/i);
 
                 if (value != null) {
                     this.push({ type: TokenType.Number, value });
@@ -216,7 +218,7 @@ export class Lexer {
                 this.advance(1);
             }
             else if (this.ch.match(/[_a-z]/i)) {
-                const value = this.eat(/[_a-z][_a-z0-9]*/i);
+                const value = this.eat(/^[_a-z][_a-z0-9]*/i);
 
                 if (value != null) {
                     const keyword = keywords.find((k) => k.toLowerCase() == value.toLowerCase());
@@ -260,15 +262,15 @@ export class Lexer {
         }
     }
 
-    private eat(pattern: RegExp): string | null {
+    private eat(pattern: RegExp): string | null | undefined {
         if (this.eof) {
-            return null;
+            return undefined;
         }
 
         const exec = pattern.exec(this.lines[this.line].slice(this.column));
         const match = exec?.[0] ?? null;
 
-        if (match != null) {
+        if (match != undefined) {
             this.advance(match.length);
             return match;
         }

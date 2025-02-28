@@ -482,6 +482,9 @@ export class Parser {
         else {
             const expression = this.eatExpression();
             if (expression) {
+                this.match(TokenType.EOL)
+                    || this.parsing(NodeType.ExpressionStatement).expected.not();
+
                 node = {
                     type: NodeType.ExpressionStatement,
                     expression
