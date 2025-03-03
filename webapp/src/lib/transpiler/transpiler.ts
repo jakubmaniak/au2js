@@ -48,6 +48,24 @@ export class Transpiler {
     private segments: string[] = ['const au3 = require("au3");\n'];
     private scope = new Scope(BlockType.Program);
 
+    private stmtResolvers = {
+        [NodeType.ExpressionStatement]: (stmt: AstNode<NodeType.ExpressionStatement>) => this.expression(stmt.expression) + ';',
+        [NodeType.Exit]: this.exit,
+        [NodeType.VarDeclaration]: this.varDeclaration,
+        [NodeType.VarAssignment]: this.varAssignment,
+        [NodeType.FunctionDeclaration]: this.funcDeclaration,
+        [NodeType.Return]: this.return,
+        [NodeType.WhileStatement]: this.whileStatement,
+        [NodeType.DoUntilStatement]: this.doUntilStatement,
+        [NodeType.ForToStatement]: this.forToStatement,
+        [NodeType.ForInStatement]: this.forInStatement,
+        [NodeType.ExitLoop]: this.exitLoop,
+        [NodeType.ContinueLoop]: this.continueLoop,
+        [NodeType.IfStatement]: this.ifStatement,
+        [NodeType.SwitchStatement]: this.switchStatement,
+        [NodeType.JsDirective]: this.jsDirective,
+    } as Record<NodeType, (node: AstNode) => string>;
+
     private constructor(private tree: AstNode<NodeType.Program>) { }
 
     static transpile(tree: AstNode<NodeType.Program>) {
@@ -97,53 +115,8 @@ export class Transpiler {
     }
 
     private statement(stmt: AstNode, { inline = false } = { }) {
-        let code = '';
-
-        if (stmt.type == NodeType.ExpressionStatement) {
-            code = this.expression(stmt.expression) + ';';
-        }
-        else if (stmt.type == NodeType.Exit) {
-            code = this.exit(stmt);
-        }
-        else if (stmt.type == NodeType.VarDeclaration) {
-            code = this.varDeclaration(stmt);
-        }
-        else if (stmt.type == NodeType.VarAssignment) {
-            code = this.varAssignment(stmt);
-        }
-        else if (stmt.type == NodeType.FunctionDeclaration) {
-            code = this.funcDeclaration(stmt);
-        }
-        else if (stmt.type == NodeType.Return) {
-            code = this.return(stmt);
-        }
-        else if (stmt.type == NodeType.WhileStatement) {
-            code = this.whileStatement(stmt);
-        }
-        else if (stmt.type == NodeType.DoUntilStatement) {
-            code = this.doUntilStatement(stmt);
-        }
-        else if (stmt.type == NodeType.ForToStatement) {
-            code = this.forToStatement(stmt);
-        }
-        else if (stmt.type == NodeType.ForInStatement) {
-            code = this.forInStatement(stmt);
-        }
-        else if (stmt.type == NodeType.ExitLoop) {
-            code = this.exitLoop(stmt);
-        }
-        else if (stmt.type == NodeType.ContinueLoop) {
-            code = this.continueLoop(stmt);
-        }
-        else if (stmt.type == NodeType.IfStatement) {
-            code = this.ifStatement(stmt);
-        }
-        else if (stmt.type == NodeType.SwitchStatement) {
-            code = this.switchStatement(stmt);
-        }
-        else if (stmt.type == NodeType.JsDirective) {
-            code = this.jsDirective(stmt);
-        }
+        const resolver = this.stmtResolvers[stmt.type];
+        let code = resolver.call(this, stmt);
 
         if (stmt.source?.precedingBlankLines) {
             for (let i = 0; i < stmt.source.precedingBlankLines; i++) {
@@ -160,8 +133,8 @@ export class Transpiler {
     private exit(node: AstNode<NodeType.Exit>) {
         if (!node.exitCode) return 'process.exit();';
         return 'process.exit(' + this.expression(node.exitCode) + ');';
-        // if (!node.code) return 'au3.Exit();';
-        // return 'au3.Exit(' + this.expression(node.code) + ');';
+        // if (!node.exitCode) return 'au3.Exit();';
+        // return 'au3.Exit(' + this.expression(node.exitCode) + ');';
     }
 
     private varDeclaration(node: AstNode<NodeType.VarDeclaration>) {
