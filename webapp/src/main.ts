@@ -121,9 +121,13 @@ function onInput() {
 function updateExtraOutput() {
     let html = '';
 
+    const excludeSourceData = (key: string, value: any) => (
+        key == 'source' ? undefined : value
+    );
+
     switch (state.currentTab) {
         case 'ast': {
-            const yaml = YAML.stringify(state.ast);
+            const yaml = YAML.stringify(state.ast, excludeSourceData);
             const hl = hljs.highlight(yaml, { language: 'yaml', ignoreIllegals: true });
             html = hl.value;
             break;
