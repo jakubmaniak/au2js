@@ -211,6 +211,30 @@ const functions = {
     StringRight(string: AuString, count: AuNumber) {
         return string.toString().slice(-count);
     },
+    StringSplit(string: AuString, delimeter: AuString, flag: AuNumber = 0) {
+        let substrings: [string | number, ...string[]];
+
+        if ((+flag & 1) || String(delimeter) == '') {
+            substrings = String(string).split(String(delimeter)) as any;
+        }
+        else {
+            const escapeRegexList = (ch: string) => ch
+                .replace(/\\/g, '\\\\')
+                .replace(/\[/g, '\\[')
+                .replace(/\]/g, '\\]')
+                .replace(/-/g, '\\-')
+                .replace(/\^/g, '\\^');
+
+            const delimeters = escapeRegexList(String(delimeter));
+            const pattern = new RegExp('[' + delimeters +']', 'g');
+
+            substrings = String(string).split(pattern) as any;
+        }
+
+        !(+flag & 2) && substrings.unshift(substrings.length);
+
+        return substrings;
+    },
     StringToBinary(string: AuString, flag: AuNumber = 1) {
         return new Binary(string, flag as 1 | 4);
     },
