@@ -86,6 +86,15 @@ const functions = {
             return Binary.fromHex(input.toString());
         return new Binary(input, 1);
     },
+    BinaryLen(input: AuString | Binary) {
+        return this.Binary(input).data.byteLength;
+    },
+    BinaryMid(input: AuString | Binary, start: AuNumber, count: AuNumber = -1) {
+        const s = +start - 1;
+        const e = (count == -1) ? undefined : s + +count;
+        const binary = this.Binary(input);
+        return binary.toSliced(s, e);
+    },
     BinaryToString(input: AuString | Binary, flag: AuConvertableNumber<1 | 4> = 1) {
         if (input instanceof Binary)
             return input.decode();
@@ -101,6 +110,12 @@ const functions = {
     },
     BitOR(a0: number, a1: number, a2 = 0, a3 = 0, a4 = 0, a5 = 0) {
         return a0 | a1 | a2 | a3 | a4 | a5;
+    },
+    Call(func: Function, ...args: any[]) {
+        if (typeof func == 'string') {
+            throw new Error('Call by name is not supported.');
+        }
+        return func(...args);
     },
     Ceiling(number: AuNumber) { return Math.ceil(+number); },
     Chr(code: AuNumber) {
@@ -118,11 +133,61 @@ const functions = {
     // Exit(number: AuNumber = 0) {
     //     macros._var.exitCode = +number;
     // },
+    Dec(text: AuString, _flag: AuNumber) {
+        const n = parseInt(text.toString(), 16);
+        return isNaN(n) ? this.SetError(1, 0, 0) : n;
+    },
+    Eval(varName: string) {
+        if (!/^[a-zA-Z_][a-zA-Z0-9_]*$/.test(varName)) {
+            return this.SetError(1, 0, '');
+        }
+        return eval('$' + varName.toLowerCase());
+    },
     Exp(number: AuNumber) { return Math.exp(+number); },
     Floor(number: AuNumber) { return Math.floor(+number); },
     FuncName(func: Function) { return func.name; },
     HotKeySet(keys: AuString, func: AuString | Function) { },
     Include(_path: string) {  },
+    Int(number: AuNumber) { return Math.trunc(+number); },
+    IsDeclared(varName: string) {
+        if (!/^[a-zA-Z_][a-zA-Z0-9_]*$/.test(varName)) {
+            return this.SetError(1, 0, 0);
+        }
+        try {
+            eval('$' + varName.toLowerCase());
+            return 1;
+        }
+        catch {
+            return 0;
+        }
+    },
+    IsArray(variable: any) {
+        return variable instanceof Array ? 1 : 0;
+    },
+    IsBool(variable: any) {
+        return (typeof variable == 'boolean') ? 1 : 0;
+    },
+    IsNumber(variable: any) {
+        return (typeof variable == 'number' && !isNaN(variable)) ? 1 : 0;
+    },
+    IsString(variable: any) {
+        return (typeof variable == 'string') ? 1 : 0;
+    },
+    IsInt(variable: any) {
+        return (typeof variable == 'number' && Number.isInteger(variable)) ? 1 : 0;
+    },
+    IsFloat(variable: any) {
+        return (typeof variable == 'number' && !Number.isInteger(variable)) ? 1 : 0;
+    },
+    IsBinary(variable: any) {
+        return (variable instanceof Binary) ? 1 : 0;
+    },
+    IsFunc(variable: any) {
+        return (typeof variable == 'function') ? 1 : 0;
+    },
+    IsKeyword(variable: any) {
+        return (variable === null) ? 2 : (variable === essentials.Default ? 1 : 0);
+    },
     Log(number: AuNumber) { return Math.log(+number); },
     Mod(a: AuNumber, b: AuNumber) { return +a % +b; },
     MouseClick() { },
@@ -299,7 +364,7 @@ class Binary {
     }
 
     static fromHex(str: string, flag: AuConvertableNumber<1 | 4> = 1) {
-        if (!str.startsWith('0x') || str.length % 2 != 0 || /[^0-9a-f]/i.test(str)) {
+        if (!str.startsWith('0x') || str.length % 2 != 0 || /[^0-9a-f]/i.test(str.slice(2))) {
             return new Binary(str, flag);
         }
 
@@ -330,6 +395,12 @@ class Binary {
         const codes = [...this.data].map((code) => hex(code));
 
         return '0x' + codes.join('').toUpperCase();
+    }
+
+    toSliced(start: number, end?: number) {
+        const slice = new Binary('', this.encoding);
+        slice.data = this.data.slice(start, end);
+        return slice;
     }
 }
 

@@ -18,30 +18,6 @@ Beyond ordinary translation, the project aims to become a superset of AutoIt3 by
 - Node.js version: 20.x or later
 - TypeScript version: 5.7.x or later
 
-## Installation
-To set up the project locally, follow these steps:
-
-```sh
-# Clone the repository
-git clone https://github.com/jakubmaniak/au2js
-
-# Navigate to the project directory
-cd au2js/webapp
-
-# Install dependencies
-npm install
-```
-
-## Usage
-To start the development server, run:
-
-```sh
-npm run dev
-```
-
-Then, open your browser and go to http://localhost:5173 to use the converter.
-
-
 ## Example
 Below is a simple example demonstrating how AutoIt3 code is converted into JavaScript using this tool:
 
@@ -83,3 +59,26 @@ function polar_fn($phi, $r) {
     return $apoint;
 }
 ```
+
+## Installation
+To set up the project locally, follow these steps:
+
+```sh
+# Clone the repository
+git clone https://github.com/jakubmaniak/au2js
+
+# Navigate to the project directory
+cd au2js/webapp
+
+# Install dependencies
+npm install
+```
+
+## Usage
+To start the development server, run the following command in `webapp` directory:
+
+```sh
+npm run dev
+```
+
+Then, open your browser and go to http://localhost:5173 to use the converter.
