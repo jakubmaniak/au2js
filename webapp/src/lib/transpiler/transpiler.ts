@@ -40,7 +40,8 @@ const builtin = new Set([
     'Tan', 'TimerInit', 'TimerDiff', 'ToolTip',
     'UBound',
     'VarGetType',
-    'WinClose', 'WinExists', 'WinWaitActive'
+    'WinClose', 'WinExists', 'WinWaitActive',
+    '_ArrayPop', '_ArrayPush', '_ArrayDelete', '_ArrayDisplay',
 ]);
 const builtinMap = new Map([...builtin].map((kwd) => [kwd.toLowerCase(), kwd]));
 const usedBuiltins = new Set<string>();
@@ -169,6 +170,9 @@ export class Transpiler {
 
                 if (decl.value) {
                     params.push(this.expression(decl.value));
+                }
+                else {
+                    params.push('[]');
                 }
 
                 const dims = '[' + decl.subscripts.map((s) => {

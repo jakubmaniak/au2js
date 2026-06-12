@@ -1,5 +1,5 @@
-import au3 from './au3';
 import { ConsoleHandler } from './console-handler';
+import au3 from './runtime/au3';
 
 
 const lib = ConsoleHandler.injectTo(au3);

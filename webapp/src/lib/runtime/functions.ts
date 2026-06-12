@@ -1,65 +1,12 @@
-type AuString = string | number | boolean;
-type AuNumber = number | boolean | string;// | null
-
-type AuConvertableNumber<T extends number> = T | `${T}`
-    | (T extends 0 ? false | null : never)
-    | (T extends 1 ? true : never);
+import { AuConvertableNumber, AuNumber, AuString } from './au3';
+import { Binary } from './binary';
+import { essentials } from './essentials';
+import { macros } from './macros';
 
 
-const essentials = {
-    Default: {
-        [Symbol.toPrimitive](hint: string) {
-            return hint == 'number' ? -1 : 'Default';
-        },
-        toString() { return 'Default'; }
-    },
-    CompareCI(a: any, b: any) {
-        (typeof a == 'string') && (a = a.toLowerCase());
-        (typeof b == 'string') && (b = b.toLowerCase());
-        return a == b;
-    },
-    And(a: any, b: any) {
-        return !!(a && b);
-    },
-    Or(a: any, b: any) {
-        return !!(a || b);
-    }
-};
-
-const macros = {
-    _var: {
-        error: 0,
-        extended: 0,
-        exitCode: 0,
-    },
-    AUTOITVERSION: '3.3.16.1',
-    COMPILED: 0,
-    CR: '\r',
-    CRLF: '\r\n',
-    get ERROR() { return this._var.error; },
-    get EXTENDED() { return this._var.extended; },
-    get EXITCODE() { return this._var.exitCode; },
-    get HOUR() { return new Date().getHours(); },
-    LF: '\n',
-    get MDAY() { return new Date().getDate(); },
-    get MIN() { return new Date().getMinutes(); },
-    get MON() { return new Date().getMonth() + 1; },
-    get MSEC() { return new Date().getMilliseconds(); },
-    get OSLANG() { return '0409'; },
-    get SEC() { return new Date().getSeconds(); },
-    SW_SHOW: 5,
-    TAB: '\t',
-    get WDAY() { return new Date().getDay() + 1; },
-    get YDAY() {
-        const d = new Date();
-        return (d.getTime() - d.setMonth(0, 1)) / (24 * 3600 * 1000) + 1;
-    },
-    get YEAR() { return new Date().getFullYear(); },
-};
-
-const functions = {
+export const functions = {
     Array(elements: any[], subscripts: number[]) {
-        const array = new Array(...elements);
+        const array = Array.from(elements);
         if (subscripts[0] != undefined) {
             if (subscripts[0] < elements.length) {
                 throw new Error('Array has incorrect number of subscripts');
@@ -112,9 +59,8 @@ const functions = {
         return a0 | a1 | a2 | a3 | a4 | a5;
     },
     Call(func: Function, ...args: any[]) {
-        if (typeof func == 'string') {
+        if (typeof func == 'string')
             throw new Error('Call by name is not supported.');
-        }
         return func(...args);
     },
     Ceiling(number: AuNumber) { return Math.ceil(+number); },
@@ -138,9 +84,8 @@ const functions = {
         return isNaN(n) ? this.SetError(1, 0, 0) : n;
     },
     Eval(varName: string) {
-        if (!/^[a-zA-Z_][a-zA-Z0-9_]*$/.test(varName)) {
+        if (!/^[a-zA-Z_][a-zA-Z0-9_]*$/.test(varName))
             return this.SetError(1, 0, '');
-        }
         return eval('$' + varName.toLowerCase());
     },
     Exp(number: AuNumber) { return Math.exp(+number); },
@@ -150,9 +95,8 @@ const functions = {
     Include(_path: string) {  },
     Int(number: AuNumber) { return Math.trunc(+number); },
     IsDeclared(varName: string) {
-        if (!/^[a-zA-Z_][a-zA-Z0-9_]*$/.test(varName)) {
+        if (!/^[a-zA-Z_][a-zA-Z0-9_]*$/.test(varName))
             return this.SetError(1, 0, 0);
-        }
         try {
             eval('$' + varName.toLowerCase());
             return 1;
@@ -336,75 +280,45 @@ const functions = {
     WinClose() { },
     WinExists() { },
     WinWaitActive() { },
+    _ArrayPush(array: any[], value: any, dir: AuConvertableNumber<0 | 1> = 0) {
+        if (!(array instanceof Array)) {
+            return this.SetError(1, 0, 0);
+        }
+        try {
+            if (dir == 0)
+                array.push(value);
+            else
+                array.unshift(value);
+            return 1;
+        }
+        catch {
+            return this.SetError(4, 0, 0);
+        }
+    },
+    _ArrayPop(array: any[]) {
+        if (!(array instanceof Array))
+            return this.SetError(1, 0, null);
+        if (array.length == 0)
+            return this.SetError(3, 0, null);
+        try {
+            return array.pop();
+        }
+        catch {
+            return this.SetError(4, 0, null);
+        }
+    },
+    _ArrayDelete(array: any[], index: AuNumber) {
+        if (!(array instanceof Array)) {
+            return this.SetError(1, 0, -1);
+        }
+        array.splice(+index, 1);
+        return array.length;
+    },
+    _ArrayDisplay(array: any[]) {
+        if (!(array instanceof Array)) {
+            return this.SetError(1, 0, 0);
+        }
+        console.table(array);
+        return 1;
+    }
 };
-
-
-class Binary {
-    data: Uint8Array;
-
-    constructor(string: AuString, public encoding: AuConvertableNumber<1 | 4>) { 
-        this.data = this.encodeString(string.toString())
-    }
-
-    private encodeString(str: string) {
-        let chars = str.split('');
-
-        if (this.encoding == 1) {
-            const codes = chars.map((ch) => {
-                const code = ch.charCodeAt(0);
-                return (code < 256) ? code : 0x3f;
-            });
-            return new Uint8Array(codes);
-        }
-        else if (this.encoding == 4) {
-            return new TextEncoder().encode(str);
-        }
-
-        return new Uint8Array(0);
-    }
-
-    static fromHex(str: string, flag: AuConvertableNumber<1 | 4> = 1) {
-        if (!str.startsWith('0x') || str.length % 2 != 0 || /[^0-9a-f]/i.test(str.slice(2))) {
-            return new Binary(str, flag);
-        }
-
-        const codes: number[] = [];
-
-        for (let i = 2; i < str.length; i += 2) {
-            codes.push(parseInt(str.slice(i, i + 2), 16));
-        }
-
-        const binary = new Binary('', flag);
-        binary.data = new Uint8Array(codes);
-        return binary;
-    }
-
-    decode() {
-        return new TextDecoder().decode(this.data);
-    }
-
-    toString() {
-        if (this.data.length == 0)
-            return '';
-
-        const hex = (n: number) => {
-            const h = n.toString(16);
-            return h.padStart(h.length + h.length % 2, '0');
-        };
-
-        const codes = [...this.data].map((code) => hex(code));
-
-        return '0x' + codes.join('').toUpperCase();
-    }
-
-    toSliced(start: number, end?: number) {
-        const slice = new Binary('', this.encoding);
-        slice.data = this.data.slice(start, end);
-        return slice;
-    }
-}
-
-
-const au3 = Object.assign(macros, functions, essentials);
-
-export default au3;
