@@ -15,8 +15,8 @@ Beyond ordinary translation, the project aims to become a superset of AutoIt3 by
 - Provides an AST and a lexer output preview
 
 ## Requirements
-- Node.js version: 20.x or later
-- TypeScript version: 5.7.x or later
+- Node.js version: 22.6.x or higher, 26.x recommended
+- TypeScript version: 5.7.x or higher
 
 ## Example
 Below is a simple example demonstrating how AutoIt3 code is converted into JavaScript using this tool:

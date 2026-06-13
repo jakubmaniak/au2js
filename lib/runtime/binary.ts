@@ -1,4 +1,4 @@
-import { AuConvertableNumber, AuString } from './au3';
+import type { AuConvertableNumber, AuString } from './au3.ts';
 
 
 export class Binary {

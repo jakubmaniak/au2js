@@ -1,5 +1,5 @@
-import { NodeType } from './node-type';
-import { VarDeclaration } from './var-declaration';
+import { NodeType } from './node-type.ts';
+import { type VarDeclaration } from './var-declaration.ts';
 
 
 export type AstNode<T extends NodeType = AstNodeMap['type']> = AstNodeBase<T> & AstNodeMap;

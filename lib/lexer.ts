@@ -1,5 +1,5 @@
-import { Token } from './types/token';
-import { TokenType } from './types/token-type';
+import { TokenType } from './types/token-type.ts';
+import { type Token } from './types/token.ts';
 
 
 const keywords = [

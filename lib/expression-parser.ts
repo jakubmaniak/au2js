@@ -1,7 +1,7 @@
-import { AstNode } from './types/ast-node';
-import { NodeType } from './types/node-type';
-import { Token } from './types/token';
-import { TokenType } from './types/token-type';
+import { type AstNode } from './types/ast-node.ts';
+import { NodeType } from './types/node-type.ts';
+import { TokenType } from './types/token-type.ts';
+import { type Token } from './types/token.ts';
 
 
 type Stack = (Token | AstNode)[];

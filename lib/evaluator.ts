@@ -1,4 +1,4 @@
-import { sanitize } from './helpers/sanitize';
+import { sanitize } from './helpers/sanitize.ts';
 
 
 export class Evaluator {

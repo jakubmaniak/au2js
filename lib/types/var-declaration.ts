@@ -1,4 +1,4 @@
-import { AstNode } from './ast-node';
+import { type AstNode } from './ast-node.ts';
 
 
 //TODO: change to AstNode

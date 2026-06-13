@@ -1,7 +1,7 @@
-import { AuConvertableNumber, AuNumber, AuString } from './au3';
-import { Binary } from './binary';
-import { essentials } from './essentials';
-import { macros } from './macros';
+import type { AuConvertableNumber, AuNumber, AuString } from './au3.ts';
+import { Binary } from './binary.ts';
+import { essentials } from './essentials.ts';
+import { macros } from './macros.ts';
 
 
 export const functions = {

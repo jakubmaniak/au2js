@@ -1,5 +1,5 @@
-import uid from '../helpers/uid';
-import { BlockType } from '../types/block-type';
+import uid from '../helpers/uid.ts';
+import { BlockType } from '../types/block-type.ts';
 
 
 export class Scope {

@@ -2,13 +2,13 @@ import hljs from 'highlight.js';
 import javascript from 'highlight.js/lib/languages/javascript';
 import yml from 'highlight.js/lib/languages/yaml';
 import JSON5 from 'json5';
+import { Evaluator } from 'lib/evaluator.ts';
+import { sanitize } from 'lib/helpers/sanitize.ts';
+import { Lexer } from 'lib/lexer.ts';
+import { Parser } from 'lib/parser.ts';
+import { Transpiler } from 'lib/transpiler';
+import { type Token } from 'lib/types/token.ts';
 import YAML from 'yaml';
-import { Evaluator } from './lib/evaluator';
-import { sanitize } from './lib/helpers/sanitize';
-import { Lexer } from './lib/lexer';
-import { Parser } from './lib/parser';
-import { Transpiler } from './lib/transpiler';
-import { Token } from './lib/types/token';
 
 
 hljs.configure({ classPrefix: 'token--' });
@@ -31,8 +31,9 @@ const output = document.querySelector('#output .content')!;
 const extraOutput = document.querySelector('#extra-output .content')!;
 const executeButton = document.querySelector('button#execute')!;
 const copyButton = document.querySelector<HTMLButtonElement>('button#copy-code')!;
+const tabsContainer = document.querySelector('#extra-output .tabs')!;
 
-document.querySelectorAll('#extra-output .tabs button')
+tabsContainer.querySelectorAll('button')
     .forEach((tab) => {
         const tabElement = tab as HTMLElement;
         const tabId = tabElement.dataset.tabId!;
@@ -55,14 +56,6 @@ addEventListener('keyup', (ev) => {
 executeButton.addEventListener('click', executeCode);
 copyButton.addEventListener('click', copyCode);
 
-function changeTab(tabId: string) {
-    state.currentTab = tabId;
-
-    document.querySelector('#extra-output .tabs button.active')?.classList.remove('active');
-    document.querySelector(`#extra-output .tabs button[data-tab-id="${tabId}"]`)?.classList.add('active');
-
-    updateExtraOutput();
-}
 
 
 function process(input: string) {
@@ -86,6 +79,18 @@ function process(input: string) {
             tokens
         };
     }
+}
+
+function executeCode() {
+    console.clear();
+    state.consoleOutput = '';
+
+    Evaluator.evaluate(state.code, (data) => {
+        state.consoleOutput += data.toString();
+        state.currentTab == 'console' && updateExtraOutput();
+    });
+
+    changeTab('console');
 }
 
 function onInput() {
@@ -114,6 +119,15 @@ function onInput() {
 
     const hl = hljs.highlight(state.code, { language: 'javascript', ignoreIllegals: true });
     output.innerHTML = hl.value;
+
+    updateExtraOutput();
+}
+
+function changeTab(tabId: string) {
+    state.currentTab = tabId;
+
+    tabsContainer.querySelector('button.active')?.classList.remove('active');
+    tabsContainer.querySelector(`button[data-tab-id="${tabId}"]`)?.classList.add('active');
 
     updateExtraOutput();
 }
@@ -161,18 +175,6 @@ function updateExtraOutput() {
 
     extraOutput.innerHTML = html;
     extraOutput.classList.remove('error');
-}
-
-function executeCode() {
-    console.clear();
-    state.consoleOutput = '';
-
-    Evaluator.evaluate(state.code, (data) => {
-        state.consoleOutput += data.toString();
-        state.currentTab == 'console' && updateExtraOutput();
-    });
-
-    changeTab('console');
 }
 
 async function copyCode() {

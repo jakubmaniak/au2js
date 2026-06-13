@@ -1,4 +1,4 @@
-import type au3 from './runtime/au3';
+import type au3 from './runtime/au3.ts';
 
 
 export class ConsoleHandler {

@@ -1,7 +1,8 @@
 {
   "name": "au2js",
-  "private": true,
-  "version": "0.0.0",
+  "description": "AutoIt to JavaScript transpiler and runtime.",
+  "author": "Jakub Maniak",
+  "license": "MIT",
   "type": "module",
   "devDependencies": {
     "ts-node": "^10.9.2",

@@ -1,6 +1,6 @@
-import { essentials } from './essentials';
-import { functions } from './functions';
-import { macros } from './macros';
+import { essentials } from './essentials.ts';
+import { functions } from './functions.ts';
+import { macros } from './macros.ts';
 
 
 export type AuString = string | number | boolean;

@@ -1,10 +1,10 @@
-import { ExpressionParser } from './expression-parser';
-import { AstNode } from './types/ast-node';
-import { BlockType } from './types/block-type';
-import { NodeType } from './types/node-type';
-import { Token } from './types/token';
-import { TokenType } from './types/token-type';
-import { VarDeclaration } from './types/var-declaration';
+import { ExpressionParser } from './expression-parser.ts';
+import { type AstNode } from './types/ast-node.ts';
+import { BlockType } from './types/block-type.ts';
+import { NodeType } from './types/node-type.ts';
+import { TokenType } from './types/token-type.ts';
+import { type Token } from './types/token.ts';
+import { type VarDeclaration } from './types/var-declaration.ts';
 
 
 export class Parser {
