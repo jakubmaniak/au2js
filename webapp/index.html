@@ -5,7 +5,7 @@
     <link rel="icon" type="image/png" href="/favicon.png">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Au2Js</title>
-    <link rel="stylesheet" href="src/style.css">
+    <link rel="stylesheet" href="src/style.scss">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap">
@@ -17,7 +17,7 @@
           <h1>AutoIt</h1>
         </div>
         <div class="content">
-          <textarea spellcheck="false" placeholder="Source code"></textarea>
+          <div id="source-editor"></div>
         </div>
       </section>
 
@@ -29,7 +29,7 @@
         <div class="content"></div>
       </section>
 
-      <section id="extra-output" class="box">
+      <section id="debug-info" class="box">
         <div class="header">
           <div class="tabs">
             <button class="active" data-tab-id="ast">AST</button>

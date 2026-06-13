@@ -8,6 +8,10 @@ This project is a tool that translates AutoIt3 code into JavaScript.<br>
 Beyond ordinary translation, the project aims to become a superset of AutoIt3 by leveraging the capabilities of Node.js and JavaScript. This allows for extended functionality while maintaining a high level of support for AutoIt3 syntax and features.
 </p>
 
+<h3 align="center">
+    <a href="https://jakubmaniak.github.io/au2js/">Demo is available here</a>
+</h3>
+
 ## Features
 - Converts AutoIt3 scripts to JavaScript in real-time
 - Built with TypeScript for type safety
@@ -15,8 +19,8 @@ Beyond ordinary translation, the project aims to become a superset of AutoIt3 by
 - Provides an AST and a lexer output preview
 
 ## Requirements
-- Node.js version: 20.x or later
-- TypeScript version: 5.7.x or later
+- Node.js version: 22.6.x or higher, 26.x recommended
+- TypeScript version: 5.7.x or higher
 
 ## Example
 Below is a simple example demonstrating how AutoIt3 code is converted into JavaScript using this tool:
@@ -30,8 +34,8 @@ Local $angle = $PI/6, _
 
 Local $point = Polar($angle, $radius)
 
-ConsoleWrite("Angle = " & $angle & @CRLF);
-ConsoleWrite("Radius = " & $angle & @CRLF);
+ConsoleWrite("Angle = " & $angle & @CRLF)
+ConsoleWrite("Radius = " & $angle & @CRLF)
 ConsoleWrite("Point = (" & $point[0] & ", " & $point[1] & ")")
 
 Func Polar($phi, $r)
@@ -50,9 +54,9 @@ let $angle = $pi / 6, $radius = 2;
 
 let $point = polar_fn($angle, $radius);
 
-au3.ConsoleWrite("Angle = " + $angle +''+ au3.CRLF);
-au3.ConsoleWrite("Radius = " + $angle +''+ au3.CRLF);
-au3.ConsoleWrite("Point = (" + $point[0] +''+ ", " + $point[1] + ")");
+au3.ConsoleWrite("Angle = " + ($angle) +''+ (au3.CRLF));
+au3.ConsoleWrite("Radius = " + ($angle) +''+ (au3.CRLF));
+au3.ConsoleWrite("Point = (" + ($point[0]) + (", ") +''+ ($point[1]) + (")"));
 
 function polar_fn($phi, $r) {
     let $apoint = [$r * au3.Cos($phi), $r * au3.Sin($phi)];

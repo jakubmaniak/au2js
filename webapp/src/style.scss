@@ -38,7 +38,10 @@ body {
     gap: 12px;
     padding: 18px;
     height: 100vh;
+    max-width: 1800px;
+    margin: 0 auto;
 }
+
 
 .box {
     display: flex;
@@ -49,50 +52,49 @@ body {
     border-radius: 8px;
     box-shadow: 0 0 6px rgba(0,0,0,0.15),
                 0 1px 6px rgba(255,255,255,0.02) inset;
+
+    .header {
+        display: flex;
+        flex-shrink: 0;
+        padding: 9px;
+        background-color: rgba(255,255,255,0.01);
+        border-bottom: 1px solid rgba(255,255,255,0.025);
+        border-radius: 6px 6px 0 0;
+    }
+
+    .header h1 {
+        height: 28px;
+        line-height: 28px;
+        padding-left: 6px;
+        color: #c0c0c4;
+        font-family: 'Inter', sans-serif;
+        font-size: 14px;
+        font-weight: 500;
+        user-select: none;
+    }
+
+    .content {
+        flex-grow: 1;
+    }
 }
 
-.box .header {
-    display: flex;
-    flex-shrink: 0;
-    padding: 9px;
-    background-color: rgba(255,255,255,0.01);
-    border-bottom: 1px solid rgba(255,255,255,0.025);
-    border-radius: 6px 6px 0 0;
-}
-
-.box .header h1 {
-    height: 28px;
-    line-height: 28px;
-    padding-left: 6px;
-    color: #c0c0c4;
-    font-family: 'Inter', sans-serif;
-    font-size: 14px;
-    font-weight: 500;
-    user-select: none;
-}
-
-.box .content {
-    flex-grow: 1;
-}
 
 #source {
     grid-area: in;
 }
 
-#source textarea {
-    height: 100%;
-    width: 100%;
-    padding: 12px 15px;
-    background-color: transparent;
-    border: 0;
-    outline: none;
-    resize: none;
-    font: inherit;
-    color: #d0dade;
+#source .content {
+    overflow: hidden;
 }
 
+#source-editor {
+    position: relative;
+    height: 100%;
+}
+
+
 #output,
-#extra-output {
+#debug-info {
     overflow: hidden;
     white-space: pre-wrap;
     color: #bed0e2;
@@ -102,17 +104,17 @@ body {
     grid-area: output;
 }
 
-#extra-output {
+#debug-info {
     grid-area: extra;
     position: relative;
 }
 
-#extra-output .tabs {
+#debug-info .tabs {
     display: flex;
     width: 100%;
 }
 
-#extra-output .tabs button {
+#debug-info .tabs button {
     padding: 6px 12px;
     background-color: transparent;
     border: 1px solid transparent;
@@ -123,18 +125,19 @@ body {
     font-weight: 500;
     cursor: pointer;
     transition: color 0.1s;
+
+    &:hover {
+        color: #f0f0f4;
+    }
+
+    &.active {
+        background-color: rgba(240,240,255,0.05);
+        border-color: rgba(240,240,255,0.05);
+        box-shadow: 0 1px 6px rgba(255,255,255,0.02) inset;
+        color: #ffffff;
+    }
 }
 
-#extra-output .tabs button:hover {
-    color: #f0f0f4;
-}
-
-#extra-output .tabs button.active {
-    background-color: rgba(240,240,255,0.05);
-    border-color: rgba(240,240,255,0.05);
-    box-shadow: 0 1px 6px rgba(255,255,255,0.02) inset;
-    color: #ffffff;
-}
 
 button#execute {
     flex-shrink: 0;
@@ -152,11 +155,12 @@ button#execute {
                 0 1px 6px rgba(255,255,255,0.1) inset;
     cursor: pointer;
     transition: background-color 0.1s;
+
+    &:hover {
+        background-color: #31632b;
+    }
 }
 
-button#execute:hover {
-    background-color: #31632b;
-}
 
 button#copy-code {
     height: 28px;
@@ -172,68 +176,42 @@ button#copy-code {
     font-weight: 500;
     cursor: pointer;
     transition: border-color 0.1s;
+
+    &:hover {
+        border-color: #ffffff3a;
+    }
 }
 
-button#copy-code:hover {
-    border-color: #ffffff3a;
-}
 
 #output .content,
-#extra-output .content {
+#debug-info .content {
     flex-grow: 1;
     padding: 12px 15px;
     margin-right: 6px;
     overflow: auto;
 }
 
-#extra-output .content.error {
+#debug-info .content.error {
     color: #d04040;
 }
 
-#extra-output .content mark {
+#debug-info .content mark {
     background-color: transparent;
     color: #808088;
 }
 
-.token--string {
-    color: #addbbc;
-}
 
-.token--title {
-    color: #e6eaef;
-}
+.token {
+    &--string   { color: #addbbc; }
+    &--title    { color: #e6eaef; }
+    &--keyword  { color: #228a96; }
+    &--number   { color: #61bcc6; }
+    &--comment  { color: #44515e; }
+    &--attr     { color: #aeb9c4; }
+    &--property { color: #bed0e2; }
+    &--variable { color: #30c1ae; font-weight: 500; }
 
-.token--keyword {
-    color: #228a96;
-}
-
-.token--number {
-    color: #61bcc6;
-}
-
-.token--comment {
-    color: #44515e;
-}
-
-.token--attr {
-    color: #aeb9c4;
-}
-
-.token--property {
-    color: #bed0e2;
-}
-
-.token--variable {
-    color: #30c1ae;
-    font-weight: 500;
-}
-
-
-/*yaml*/
-.token--literal {
-    color: #228a96;
-}
-
-.token--bullet {
-    color: #808080;
+    // for yaml
+    &--literal  { color: #228a96; }
+    &--bullet   { color: #808080; }
 }

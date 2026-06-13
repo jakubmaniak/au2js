@@ -1,12 +1,27 @@
-import { AstNode } from '../types/ast-node';
-import { BlockType } from '../types/block-type';
-import { NodeType } from '../types/node-type';
-import { Scope } from './scope';
+import { type AstNode } from '../types/ast-node.ts';
+import { BlockType } from '../types/block-type.ts';
+import { NodeType } from '../types/node-type.ts';
+import { Scope } from './scope.ts';
 
 
 const macros = new Set([
-    'AUTOITVERSION', 'COMPILED', 'CR', 'CRLF', 'ERROR', 'EXITCODE', 'EXTENDED', 'HOUR', 'LF',
-    'MDAY', 'MIN', 'MON', 'MSEC', 'OSLANG', 'SEC', 'SW_SHOW', 'TAB', 'WDAY', 'YDAY', 'YEAR'
+    'APPDATACOMMONDIR', 'APPDATADIR', 'AUTOITVERSION', 'AUTOITX64',
+    'COMMONFILESDIR', 'COMPILED', 'COMPUTERNAME', 'CR', 'CRLF',
+    'DESKTOPCOMMONDIR', 'DESKTOPDEPTH', 'DESKTOPDIR', 'DESKTOPHEIGHT', 'DESKTOPREFRESH', 'DESKTOPWIDTH',
+    'ERROR', 'EXTENDED', 'EXITCODE',
+    'HOUR',
+    'LF',
+    'MDAY', 'MIN', 'MON', 'MSEC',
+    'OSLANG',
+    'SCRIPTDIR', 'SCRIPTFULLPATH', 'SCRIPTLINENUMBER', 'SCRIPTNAME', 'SEC',
+    'STARTMENUCOMMONDIR', 'STARTMENUDIR', 'STARTUPCOMMONDIR', 'STARTUPDIR',
+    'SW_HIDE', 'SW_MAXIMIZE', 'SW_MINIMIZE', 'SW_RESTORE', 'SW_SHOW', 'SW_SHOWDEFAULT', 'SW_SHOWMAXIMIZED', 
+    'SW_SHOWMINIMIZED', 'SW_SHOWMINNOACTIVE', 'SW_SHOWNA', 'SW_SHOWNOACTIVATE', 'SW_SHOWNORMAL',
+    'SYSTEMDIR',
+    'TAB', 'TEMPDIR',
+    'USERNAME', 'USERPROFILEDIR',
+    'WDAY', 'WINDOWSDIR', 'WORKINGDIR',
+    'YDAY', 'YEAR',
 ]);
 
 const builtin = new Set([
@@ -43,7 +58,7 @@ const builtin = new Set([
     'WinClose', 'WinExists', 'WinWaitActive',
     '_ArrayPop', '_ArrayPush', '_ArrayDelete', '_ArrayDisplay',
 ]);
-const builtinMap = new Map([...builtin].map((kwd) => [kwd.toLowerCase(), kwd]));
+const builtinMap = new Map([...builtin].map((kw) => [kw.toLowerCase(), kw]));
 const usedBuiltins = new Set<string>();
 
 export class Transpiler {
