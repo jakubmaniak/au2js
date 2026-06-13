@@ -10,13 +10,14 @@
   },
   "devDependencies": {
     "@types/object-inspect": "^1.13.0",
+    "sass-embedded": "^1.100.0",
     "typescript": "~5.7.2",
     "vite": "^6.1.0"
   },
   "dependencies": {
-    "lib": "file:../lib",
     "highlight.js": "^11.11.1",
     "json5": "^2.2.3",
+    "lib": "file:../lib",
     "object-inspect": "^1.13.4",
     "yaml": "^2.7.0"
   }
