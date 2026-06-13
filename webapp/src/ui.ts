@@ -1,13 +1,18 @@
+import { history, historyKeymap } from '@codemirror/commands';
+import { syntaxHighlighting } from '@codemirror/language';
+import { keymap, lineNumbers } from '@codemirror/view';
+import { EditorView } from 'codemirror';
 import hljs from 'highlight.js';
 import javascript from 'highlight.js/lib/languages/javascript';
 import yml from 'highlight.js/lib/languages/yaml';
 import JSON5 from 'json5';
 import { sanitize } from 'lib/helpers/sanitize';
 import YAML from 'yaml';
+import { autoitLanguage } from './editor/language';
+import { highlightStyle, theme } from './editor/theme';
 import { state } from './state';
 
 
-const textarea = document.querySelector<HTMLTextAreaElement>('#source textarea')!;
 const output = document.querySelector('#output .content')!;
 const debugOutput = document.querySelector('#debug-info .content')!;
 const executeButton = document.querySelector('button#execute')!;
@@ -20,11 +25,13 @@ type UIEvents = {
     onExecute: () => void;
 };
 
+let editorView: EditorView;
 
 export function initUI(events: UIEvents) {
     hljs.configure({ classPrefix: 'token--' });
     hljs.registerLanguage('javascript', javascript);
     hljs.registerLanguage('yaml', yml);
+
 
     debugTabs.querySelectorAll('button')
         .forEach((tab) => {
@@ -34,9 +41,6 @@ export function initUI(events: UIEvents) {
             tabElement.addEventListener('click', () => changeTab(tabId));
         });
 
-    textarea.addEventListener('input', () => events.onInput(textarea.value));
-
-    textarea.value = localStorage.getItem('au2js:source') ?? '';
 
     executeButton.addEventListener('click', () => events.onExecute());
     copyButton.addEventListener('click', copyCode);
@@ -49,16 +53,43 @@ export function initUI(events: UIEvents) {
     });
 
 
+    editorView = new EditorView({
+        parent: document.getElementById('source-editor')!,
+        extensions: [
+            lineNumbers(),
+            autoitLanguage,
+            theme,
+            syntaxHighlighting(highlightStyle),
+            history(),
+            keymap.of(historyKeymap),
+
+            EditorView.updateListener.of((update) => {
+                if (update.docChanged) {
+                    const value = update.state.doc.toString();
+                    events.onInput(value);
+                }
+            })
+        ],
+    });
+
+
     return {
-        textarea,
         output,
         debugOutput,
 
+        setEditorContent,
         changeTab,
         updateOutput,
         updateDebugInfo,
         showError,
     };
+}
+
+
+function setEditorContent(value: string) {
+    editorView.dispatch({
+        changes: { from: 0, to: editorView.state.doc.length, insert: value }
+    });
 }
 
 

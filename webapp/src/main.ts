@@ -20,8 +20,8 @@ function initSourceCode() {
     const defaultSource = `ConsoleWrite("Hello, JavaScript!")`;
     const source = localStorage.getItem('au2js:source') ?? defaultSource;
 
-    ui.textarea.value = source;
-    onInput(ui.textarea.value);
+    ui.setEditorContent(source);
+    onInput(source);
 }
 
 

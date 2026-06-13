@@ -83,16 +83,13 @@ body {
     grid-area: in;
 }
 
-#source textarea {
+#source .content {
+    overflow: hidden;
+}
+
+#source-editor {
+    position: relative;
     height: 100%;
-    width: 100%;
-    padding: 12px 15px;
-    background-color: transparent;
-    border: 0;
-    outline: none;
-    resize: none;
-    font: inherit;
-    color: #d0dade;
 }
 
 
