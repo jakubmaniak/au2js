@@ -8,6 +8,10 @@ This project is a tool that translates AutoIt3 code into JavaScript.<br>
 Beyond ordinary translation, the project aims to become a superset of AutoIt3 by leveraging the capabilities of Node.js and JavaScript. This allows for extended functionality while maintaining a high level of support for AutoIt3 syntax and features.
 </p>
 
+<h3 align="center">
+    <a href="https://jakubmaniak.github.io/au2js/">Demo is available here</a>
+</h3>
+
 ## Features
 - Converts AutoIt3 scripts to JavaScript in real-time
 - Built with TypeScript for type safety
