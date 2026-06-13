@@ -38,6 +38,8 @@ body {
     gap: 12px;
     padding: 18px;
     height: 100vh;
+    max-width: 1800px;
+    margin: 0 auto;
 }
 
 .box {
@@ -92,7 +94,7 @@ body {
 }
 
 #output,
-#extra-output {
+#debug-info {
     overflow: hidden;
     white-space: pre-wrap;
     color: #bed0e2;
@@ -102,17 +104,17 @@ body {
     grid-area: output;
 }
 
-#extra-output {
+#debug-info {
     grid-area: extra;
     position: relative;
 }
 
-#extra-output .tabs {
+#debug-info .tabs {
     display: flex;
     width: 100%;
 }
 
-#extra-output .tabs button {
+#debug-info .tabs button {
     padding: 6px 12px;
     background-color: transparent;
     border: 1px solid transparent;
@@ -125,11 +127,11 @@ body {
     transition: color 0.1s;
 }
 
-#extra-output .tabs button:hover {
+#debug-info .tabs button:hover {
     color: #f0f0f4;
 }
 
-#extra-output .tabs button.active {
+#debug-info .tabs button.active {
     background-color: rgba(240,240,255,0.05);
     border-color: rgba(240,240,255,0.05);
     box-shadow: 0 1px 6px rgba(255,255,255,0.02) inset;
@@ -179,18 +181,18 @@ button#copy-code:hover {
 }
 
 #output .content,
-#extra-output .content {
+#debug-info .content {
     flex-grow: 1;
     padding: 12px 15px;
     margin-right: 6px;
     overflow: auto;
 }
 
-#extra-output .content.error {
+#debug-info .content.error {
     color: #d04040;
 }
 
-#extra-output .content mark {
+#debug-info .content mark {
     background-color: transparent;
     color: #808088;
 }

@@ -1,0 +1,140 @@
+import hljs from 'highlight.js';
+import javascript from 'highlight.js/lib/languages/javascript';
+import yml from 'highlight.js/lib/languages/yaml';
+import JSON5 from 'json5';
+import { sanitize } from 'lib/helpers/sanitize';
+import YAML from 'yaml';
+import { state } from './state';
+
+
+const textarea = document.querySelector<HTMLTextAreaElement>('#source textarea')!;
+const output = document.querySelector('#output .content')!;
+const debugOutput = document.querySelector('#debug-info .content')!;
+const executeButton = document.querySelector('button#execute')!;
+const copyButton = document.querySelector<HTMLButtonElement>('button#copy-code')!;
+const debugTabs = document.querySelector('#debug-info .tabs')!;
+
+
+type UIEvents = {
+    onInput: (value: string) => void;
+    onExecute: () => void;
+};
+
+
+export function initUI(events: UIEvents) {
+    hljs.configure({ classPrefix: 'token--' });
+    hljs.registerLanguage('javascript', javascript);
+    hljs.registerLanguage('yaml', yml);
+
+    debugTabs.querySelectorAll('button')
+        .forEach((tab) => {
+            const tabElement = tab as HTMLElement;
+            const tabId = tabElement.dataset.tabId!;
+
+            tabElement.addEventListener('click', () => changeTab(tabId));
+        });
+
+    textarea.addEventListener('input', () => events.onInput(textarea.value));
+
+    textarea.value = localStorage.getItem('au2js:source') ?? '';
+
+    executeButton.addEventListener('click', () => events.onExecute());
+    copyButton.addEventListener('click', copyCode);
+
+    addEventListener('keyup', (ev) => {
+        if (ev.code == 'Enter' && ev.ctrlKey) {
+            ev.preventDefault();
+            events.onExecute();
+        }
+    });
+
+
+    return {
+        textarea,
+        output,
+        debugOutput,
+
+        changeTab,
+        updateOutput,
+        updateDebugInfo,
+        showError,
+    };
+}
+
+
+function changeTab(tabId: string) {
+    state.currentTab = tabId;
+
+    debugTabs.querySelector('button.active')?.classList.remove('active');
+    debugTabs.querySelector(`button[data-tab-id="${tabId}"]`)?.classList.add('active');
+
+    updateDebugInfo();
+}
+
+
+function updateOutput() {
+    const hl = hljs.highlight(state.code, { language: 'javascript', ignoreIllegals: true });
+    output.innerHTML = hl.value;
+}
+
+
+function updateDebugInfo() {
+    let html = '';
+
+    const excludeSourceKey = (key: string, value: any) => (
+        key == 'source' ? undefined : value
+    );
+
+    switch (state.currentTab) {
+        case 'ast': {
+            const yaml = YAML.stringify(state.ast, excludeSourceKey);
+            const hl = hljs.highlight(yaml, { language: 'yaml', ignoreIllegals: true });
+            html = hl.value;
+            break;
+        }
+        case 'tokens': {
+            const tokens = state.tokens
+                .map((token) => {
+                    const position = (
+                        token.source
+                        ? (token.source.line + ':' + token.source.column)
+                        : ''
+                    );
+                    const type = (
+                        (token.value !== undefined)
+                        ? `${token.type.padEnd(10, ' ')} ${JSON5.stringify(token.value)}`
+                        : token.type
+                    );
+                    return position.padEnd(5, ' ') + ' ' + type;
+                })
+                .join('\n');
+
+            const hl = hljs.highlight(tokens, { language: 'javascript', ignoreIllegals: true });
+            html = hl.value;
+            break;
+        }
+        case 'console': {
+            html = state.consoleOutput;
+            break;
+        }
+    }
+
+    debugOutput.innerHTML = html;
+    debugOutput.classList.remove('error');
+}
+
+
+function showError(error: string) {
+    debugOutput.innerHTML = sanitize(error);
+    debugOutput.classList.add('error');
+}
+
+
+async function copyCode() {
+    await navigator.clipboard.writeText(state.code);
+    copyButton.innerText = 'Copied';
+
+    setTimeout(() => {
+        copyButton.innerText = 'Copy';
+    }, 1500);
+}

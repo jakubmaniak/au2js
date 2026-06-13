@@ -1,68 +1,35 @@
-import hljs from 'highlight.js';
-import javascript from 'highlight.js/lib/languages/javascript';
-import yml from 'highlight.js/lib/languages/yaml';
-import JSON5 from 'json5';
-import { Evaluator } from 'lib/evaluator.ts';
-import { sanitize } from 'lib/helpers/sanitize.ts';
-import { Lexer } from 'lib/lexer.ts';
-import { Parser } from 'lib/parser.ts';
+import { Evaluator } from 'lib/evaluator';
+import { Lexer } from 'lib/lexer';
+import { Parser } from 'lib/parser';
 import { Transpiler } from 'lib/transpiler';
-import { type Token } from 'lib/types/token.ts';
-import YAML from 'yaml';
+import { Token } from 'lib/types/token';
+import { state } from './state';
+import { initUI } from './ui';
 
 
-hljs.configure({ classPrefix: 'token--' });
-hljs.registerLanguage('javascript', javascript);
-hljs.registerLanguage('yaml', yml);
 
-
-const state = {
-    currentTab: 'ast',
-    code: '',
-    tokens: [] as Token[],
-    ast: { },
-    consoleOutput: '',
-    error: null,
-};
-
-
-const textarea = document.querySelector<HTMLTextAreaElement>('#source textarea')!;
-const output = document.querySelector('#output .content')!;
-const extraOutput = document.querySelector('#extra-output .content')!;
-const executeButton = document.querySelector('button#execute')!;
-const copyButton = document.querySelector<HTMLButtonElement>('button#copy-code')!;
-const tabsContainer = document.querySelector('#extra-output .tabs')!;
-
-tabsContainer.querySelectorAll('button')
-    .forEach((tab) => {
-        const tabElement = tab as HTMLElement;
-        const tabId = tabElement.dataset.tabId!;
-
-        tabElement.addEventListener('click', () => changeTab(tabId));
-    });
-
-textarea.addEventListener('input', () => onInput());
-
-textarea.value = localStorage.getItem('au2js:source') ?? '';
-onInput();
-
-addEventListener('keyup', (ev) => {
-    if (ev.code == 'Enter' && ev.ctrlKey) {
-        ev.preventDefault();
-        executeCode();
-    }
+const ui = initUI({
+    onInput,
+    onExecute: executeCode
 });
 
-executeButton.addEventListener('click', executeCode);
-copyButton.addEventListener('click', copyCode);
+initSourceCode();
 
 
+function initSourceCode() {
+    const defaultSource = `ConsoleWrite("Hello, JavaScript!")`;
+    const source = localStorage.getItem('au2js:source') ?? defaultSource;
 
-function process(input: string) {
+    ui.textarea.value = source;
+    onInput(ui.textarea.value);
+}
+
+
+function transpile(source: string) {
     let tokens: Token[] = [];
 
     try {
-        tokens = Lexer.getTokens(input);
+        tokens = Lexer.getTokens(source);
         const ast = Parser.getAst(tokens);
         const code = Transpiler.transpile(ast);
 
@@ -81,107 +48,42 @@ function process(input: string) {
     }
 }
 
+
 function executeCode() {
     console.clear();
     state.consoleOutput = '';
 
     Evaluator.evaluate(state.code, (data) => {
         state.consoleOutput += data.toString();
-        state.currentTab == 'console' && updateExtraOutput();
+        state.currentTab == 'console' && ui.updateDebugInfo();
     });
 
-    changeTab('console');
+    ui.changeTab('console');
 }
 
-function onInput() {
-    if (textarea.value.trim().length == 0) {
-        output.innerHTML = '';
-        extraOutput.innerHTML = '';
+
+function onInput(source: string) {
+    localStorage.setItem('au2js:source', source);
+
+    if (source.trim().length == 0) {
+        ui.output.innerHTML = '';
+        ui.debugOutput.innerHTML = '';
         return;
     }
 
-    localStorage.setItem('au2js:source', textarea.value);
-
-    const result = process(textarea.value);
+    const result = transpile(source);
 
     if (result.error) {
         state.error = result.error;
         state.tokens = result.tokens;
-
-        extraOutput.innerHTML = sanitize(result.error);
-        extraOutput.classList.add('error');
+        ui.showError(result.error);
         return;
     }
 
     state.code = result.code!;
-    state.tokens = result.tokens!;
+    state.tokens = result.tokens;
     state.ast = result.ast!;
 
-    const hl = hljs.highlight(state.code, { language: 'javascript', ignoreIllegals: true });
-    output.innerHTML = hl.value;
-
-    updateExtraOutput();
-}
-
-function changeTab(tabId: string) {
-    state.currentTab = tabId;
-
-    tabsContainer.querySelector('button.active')?.classList.remove('active');
-    tabsContainer.querySelector(`button[data-tab-id="${tabId}"]`)?.classList.add('active');
-
-    updateExtraOutput();
-}
-
-function updateExtraOutput() {
-    let html = '';
-
-    const excludeSourceData = (key: string, value: any) => (
-        key == 'source' ? undefined : value
-    );
-
-    switch (state.currentTab) {
-        case 'ast': {
-            const yaml = YAML.stringify(state.ast, excludeSourceData);
-            const hl = hljs.highlight(yaml, { language: 'yaml', ignoreIllegals: true });
-            html = hl.value;
-            break;
-        }
-        case 'tokens': {
-            const tokens = state.tokens
-                .map((token) => {
-                    const position = (
-                        token.source
-                        ? (token.source.line + ':' + token.source.column)
-                        : ''
-                    );
-                    const type = (
-                        (token.value !== undefined)
-                        ? `${token.type.padEnd(10, ' ')} ${JSON5.stringify(token.value)}`
-                        : token.type
-                    );
-                    return position.padEnd(5, ' ') + ' ' + type;
-                })
-                .join('\n');
-
-            const hl = hljs.highlight(tokens, { language: 'javascript', ignoreIllegals: true });
-            html = hl.value;
-            break;
-        }
-        case 'console': {
-            html = state.consoleOutput;
-            break;
-        }
-    }
-
-    extraOutput.innerHTML = html;
-    extraOutput.classList.remove('error');
-}
-
-async function copyCode() {
-    await navigator.clipboard.writeText(state.code);
-    copyButton.innerText = 'Copied';
-
-    setTimeout(() => {
-        copyButton.innerText = 'Copy';
-    }, 1500);
+    ui.updateOutput();
+    ui.updateDebugInfo();
 }
