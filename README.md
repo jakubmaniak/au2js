@@ -34,8 +34,8 @@ Local $angle = $PI/6, _
 
 Local $point = Polar($angle, $radius)
 
-ConsoleWrite("Angle = " & $angle & @CRLF);
-ConsoleWrite("Radius = " & $angle & @CRLF);
+ConsoleWrite("Angle = " & $angle & @CRLF)
+ConsoleWrite("Radius = " & $angle & @CRLF)
 ConsoleWrite("Point = (" & $point[0] & ", " & $point[1] & ")")
 
 Func Polar($phi, $r)
@@ -54,9 +54,9 @@ let $angle = $pi / 6, $radius = 2;
 
 let $point = polar_fn($angle, $radius);
 
-au3.ConsoleWrite("Angle = " + $angle +''+ au3.CRLF);
-au3.ConsoleWrite("Radius = " + $angle +''+ au3.CRLF);
-au3.ConsoleWrite("Point = (" + $point[0] +''+ ", " + $point[1] + ")");
+au3.ConsoleWrite("Angle = " + ($angle) +''+ (au3.CRLF));
+au3.ConsoleWrite("Radius = " + ($angle) +''+ (au3.CRLF));
+au3.ConsoleWrite("Point = (" + ($point[0]) + (", ") +''+ ($point[1]) + (")"));
 
 function polar_fn($phi, $r) {
     let $apoint = [$r * au3.Cos($phi), $r * au3.Sin($phi)];
