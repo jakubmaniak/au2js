@@ -167,18 +167,21 @@ export class Transpiler {
         }
 
         let code = (
+            node.isStatic ? '' :
             node.isConst ? 'const ' :
-            node.isStatic ? 'static_.' :
             'let '
         );
 
         for (let i = 0; i < node.declarations.length; i++) {
             const decl = node.declarations[i];
 
-            let variable = '$' + decl.name.toLowerCase();
+            const prefix = (node.isStatic ? 'static_.' : '');
+            const variable = prefix + '$' + decl.name.toLowerCase();
 
             if (i == 0) code += variable;
             else code += ', ' + variable;
+
+            const op = node.isStatic ? ' ??= ' : ' = ';
 
             if (decl.subscripts) {
                 const params: string[] = [];
@@ -197,10 +200,10 @@ export class Transpiler {
 
                 params.push(dims);
 
-                code += ' = au3.Array(' + params.join(', ') + ')';
+                code += op + 'au3.Array(' + params.join(', ') + ')';
             }
             else if (decl.value) {
-                code += ' = ' + this.expression(decl.value);
+                code += op + this.expression(decl.value);
             }
         }
 
