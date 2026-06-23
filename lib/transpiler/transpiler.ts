@@ -61,8 +61,17 @@ const builtin = new Set([
 const builtinMap = new Map([...builtin].map((kw) => [kw.toLowerCase(), kw]));
 const usedBuiltins = new Set<string>();
 
+
+export type TranspilerConfig = {
+    varPrefix?: string;
+    esm?: boolean;
+    au3LibPath?: string;
+};
+
+
 export class Transpiler {
-    private segments: string[] = ['const au3 = require("au3");\n'];
+    private varPrefix = '$';
+    private segments: string[] = [];
     private scope = new Scope(BlockType.Program);
 
     private stmtResolvers = {
@@ -83,10 +92,21 @@ export class Transpiler {
         [NodeType.JsDirective]: this.jsDirective,
     } as Record<NodeType, (node: AstNode) => string>;
 
-    private constructor(private tree: AstNode<NodeType.Program>) { }
+    private constructor(private tree: AstNode<NodeType.Program>, config: TranspilerConfig = {}) {
+        this.init(config);
+    }
 
-    static transpile(tree: AstNode<NodeType.Program>) {
-        return new Transpiler(tree).run();
+    static transpile(tree: AstNode<NodeType.Program>, config: TranspilerConfig = {}) {
+        return new Transpiler(tree, config).run();
+    }
+
+    private init(config: TranspilerConfig) {
+        this.varPrefix = config.varPrefix ?? this.varPrefix;
+        this.segments.push(
+            config.esm
+            ? `import * as au3 from "${config.au3LibPath || './runtime/au3.ts'}";`
+            : `const au3 = require("${config.au3LibPath || 'au3'}");`
+        );
     }
 
     private run(): string {
@@ -129,6 +149,10 @@ export class Transpiler {
             .split('\n')
             .map((line) => spaces + line)
             .join('\n');
+    }
+
+    private varName(name: string) {
+        return this.varPrefix + name.toLowerCase();
     }
 
     private statement(stmt: AstNode, { inline = false } = { }) {
@@ -176,7 +200,7 @@ export class Transpiler {
             const decl = node.declarations[i];
 
             const prefix = (node.isStatic ? 'static_.' : '');
-            const variable = prefix + '$' + decl.name.toLowerCase();
+            const variable = prefix + this.varName(decl.name);
 
             if (i == 0) code += variable;
             else code += ', ' + variable;
@@ -247,9 +271,9 @@ export class Transpiler {
         else if (node.type == NodeType.VarReference) {
             const funcScope = this.scope.ofType(BlockType.Func);
             if (funcScope && funcScope.statics.has(node.name)) {
-                return 'static_.$' + node.name.toLowerCase();
+                return 'static_.' + this.varName(node.name);
             }
-            return '$' + node.name.toLowerCase();
+            return this.varName(node.name);
         }
         else if (node.type == NodeType.MacroCall) {
             const name = node.name.toUpperCase();
@@ -359,7 +383,7 @@ export class Transpiler {
     }
 
     private parameter(node: AstNode<NodeType.Parameter>) {
-        return '$' + node.name.toLowerCase()
+        return this.varName(node.name)
             + (node.defaultValue ? ' = ' + this.expression(node.defaultValue) : '');
     }
 
@@ -406,7 +430,7 @@ export class Transpiler {
     private forToStatement(node: AstNode<NodeType.ForToStatement>) {
         let code = 'for (';
 
-        const variable = '$' + node.variable.toLowerCase();
+        const variable = this.varName(node.variable);
         const step = node.step ? (' += ' + this.expression(node.step)) : '++';
 
         code += `let ${variable} = ${this.expression(node.start)}; `;
@@ -437,7 +461,7 @@ export class Transpiler {
     private forInStatement(node: AstNode<NodeType.ForInStatement>) {
         let code = 'for (';
 
-        const variable = '$' + node.variable.toLowerCase();
+        const variable = this.varName(node.variable);
 
         code += `let ${variable} of ${this.expression(node.array)}) {\n`;
 
