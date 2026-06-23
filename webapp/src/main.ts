@@ -17,8 +17,10 @@ initSourceCode();
 
 
 function initSourceCode() {
-    const defaultSource = `ConsoleWrite("Hello, JavaScript!")`;
-    const source = localStorage.getItem('au2js:source') ?? defaultSource;
+    const defaultSource = `Local $n = 7
+ConsoleWrite("Hello, JavaScript!" & @CRLF & "$n = " & $n)
+`;
+    const source = localStorage.getItem('au2js:source') || defaultSource;
 
     ui.setEditorContent(source);
     onInput(source);
