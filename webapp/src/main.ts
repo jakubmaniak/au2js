@@ -17,13 +17,19 @@ initSourceCode();
 
 
 function initSourceCode() {
-    const defaultSource = `Local $n = 7
-ConsoleWrite("Hello, JavaScript!" & @CRLF & "$n = " & $n)
+    const defaultSource = `Local $n = Random(0, 10)
+ConsoleWrite("Hello, JavaScript!" & @CRLF & "$n = " & $n & @CRLF)
+
+If $n > 9 Then
+  ConsoleWrite("You are lucky" & @CRLF)
+EndIf
 `;
     const source = localStorage.getItem('au2js:source') || defaultSource;
 
     ui.setEditorContent(source);
     onInput(source);
+
+    ui.focusEditor();
 }
 
 
