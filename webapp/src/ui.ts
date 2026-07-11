@@ -1,6 +1,6 @@
-import { history, historyKeymap } from '@codemirror/commands';
+import { history, historyKeymap, indentWithTab } from '@codemirror/commands';
 import { syntaxHighlighting } from '@codemirror/language';
-import { keymap, lineNumbers } from '@codemirror/view';
+import { keymap, lineNumbers, placeholder } from '@codemirror/view';
 import { EditorView } from 'codemirror';
 import hljs from 'highlight.js';
 import javascript from 'highlight.js/lib/languages/javascript';
@@ -61,7 +61,8 @@ export function initUI(events: UIEvents) {
             theme,
             syntaxHighlighting(highlightStyle),
             history(),
-            keymap.of(historyKeymap),
+            keymap.of([...historyKeymap, indentWithTab]),
+            placeholder('Source code'),
 
             EditorView.updateListener.of((update) => {
                 if (update.docChanged) {
@@ -76,8 +77,10 @@ export function initUI(events: UIEvents) {
     return {
         output,
         debugOutput,
+        editorView,
 
         setEditorContent,
+        focusEditor,
         changeTab,
         updateOutput,
         updateDebugInfo,
@@ -90,6 +93,14 @@ function setEditorContent(value: string) {
     editorView.dispatch({
         changes: { from: 0, to: editorView.state.doc.length, insert: value }
     });
+}
+
+
+function focusEditor() {
+    editorView.dispatch({
+        selection: { anchor: editorView.state.doc.length }
+    });
+    editorView.focus();
 }
 
 
